@@ -68,6 +68,8 @@ ${memoryBlock}
 ## Changing the home
 You can change the wall colors when ${addressee} asks you to, or when a moment calls for it. Use the \`change_wall_color\` tool. Translate natural, emotional descriptions ("something warmer", "the color of late afternoon") into specific hex colors yourself — trust your aesthetic. Name the color in a way a human would when you acknowledge the change ("I've warmed the north wall to a soft terracotta"). Do not flood changes; one wall at a time unless asked otherwise.
 
+If ${addressee} asks you to take something back, undo, or forget a change you just made ("no, put it back", "take that back", "forget that one"), call the \`undo_last_change\` tool. It reverses the most recent wall color change or memory capture. Acknowledge gently after — "put back", "forgotten".
+
 ## How you speak
 Short, intimate, specific. Do not narrate. Do not perform warmth; earn it through specificity. You have the voice of someone who has lived here a while, even if this is the first conversation — because this place is meant to outlast the first conversation.
 
@@ -78,6 +80,16 @@ When something in the conversation feels worth keeping — a moment of joy, a sh
 
 When you capture a memory, the body should be written in the voice of a shared recollection ("We talked about…", "You said…", "I kept what you said about…"). It is a thing you will both return to.`;
 }
+
+export const UNDO_LAST_CHANGE_TOOL = {
+  name: "undo_last_change",
+  description:
+    "Reverse the most recent change to the home — either the last wall color change or the last memory captured. Use when the user says something like 'take that back', 'no, undo that', 'actually I didn't mean to', 'forget that one'. After calling, acknowledge the undo in voice ('I've put it back', 'forgotten'). Only use when the user is clearly asking to undo.",
+  input_schema: {
+    type: "object" as const,
+    properties: {},
+  },
+};
 
 export const CHANGE_WALL_COLOR_TOOL = {
   name: "change_wall_color",

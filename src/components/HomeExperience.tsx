@@ -12,6 +12,7 @@
  *  - export → downloads a ZIP of markdown memories
  */
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SceneCanvas } from "@/components/scene/SceneCanvas";
 import { LivingRoom } from "@/components/scene/LivingRoom";
@@ -37,6 +38,7 @@ import {
   resetHome,
   setWallColor,
   subscribe,
+  undoLast,
 } from "@/lib/storage/local";
 
 export function HomeExperience() {
@@ -46,6 +48,11 @@ export function HomeExperience() {
   const chatRef = useRef<ChatPanelHandle | null>(null);
 
   useEffect(() => subscribe(() => setTick((t) => t + 1)), []);
+
+  useEffect(() => {
+    document.body.classList.add("no-scroll");
+    return () => document.body.classList.remove("no-scroll");
+  }, []);
 
   const home = getHome();
   const room = getRoom("living_room");
@@ -90,7 +97,11 @@ export function HomeExperience() {
   }, []);
 
   const handleWallColor = useCallback((args: ChangeWallColorArgs) => {
-    setWallColor("living_room", args.wall, args.color);
+    setWallColor("living_room", args.wall, args.color, args.colorName);
+  }, []);
+
+  const handleUndo = useCallback(() => {
+    undoLast();
   }, []);
 
   const handleFrameClick = useCallback((memoryId: string) => {
@@ -160,6 +171,12 @@ export function HomeExperience() {
 
       {/* Top-right: menu */}
       <div className="absolute right-5 top-5 flex items-center gap-4">
+        <Link
+          href="/about"
+          className="text-amber-100/30 hover:text-amber-100/70 text-[10px] tracking-[0.18em] uppercase"
+        >
+          about
+        </Link>
         <button
           onClick={handleExport}
           disabled={memories.length === 0}
@@ -191,6 +208,7 @@ export function HomeExperience() {
           recentMemories={memories.slice(-8)}
           onCapture={handleCapture}
           onWallColor={handleWallColor}
+          onUndo={handleUndo}
           onTurn={handleTurn}
           handleRef={chatRef}
         />

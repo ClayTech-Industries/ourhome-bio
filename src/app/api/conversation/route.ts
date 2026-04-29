@@ -18,6 +18,7 @@ import {
   buildSystemPrompt,
   CAPTURE_MEMORY_TOOL,
   CHANGE_WALL_COLOR_TOOL,
+  UNDO_LAST_CHANGE_TOOL,
 } from "@/lib/llm/prompts";
 import {
   CaptureMemoryArgs,
@@ -115,7 +116,7 @@ export async function POST(req: Request) {
           max_tokens: 1024,
           system,
           messages,
-          tools: [CHANGE_WALL_COLOR_TOOL, CAPTURE_MEMORY_TOOL],
+          tools: [UNDO_LAST_CHANGE_TOOL, CHANGE_WALL_COLOR_TOOL, CAPTURE_MEMORY_TOOL],
         });
 
         ms.on("text", (delta: string) => {
@@ -132,6 +133,8 @@ export async function POST(req: Request) {
           } else if (block.name === "capture_memory") {
             const parsed = CaptureMemoryArgs.safeParse(block.input);
             if (parsed.success) send({ type: "capture", args: parsed.data });
+          } else if (block.name === "undo_last_change") {
+            send({ type: "undo" });
           }
         }
 
