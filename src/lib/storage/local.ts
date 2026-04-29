@@ -14,12 +14,31 @@ import type { Companion, Home, Memory, MemoryObject, Room } from "@/lib/schema";
 
 const STORAGE_KEY = "ourhome.v0.home";
 
+export type UndoEntry =
+  | {
+      kind: "wall_color";
+      roomSlug: string;
+      wall: "north" | "south" | "east" | "west";
+      before: string | undefined;
+      after: string;
+      description: string;
+      at: string;
+    }
+  | {
+      kind: "memory_capture";
+      memoryId: string;
+      objectId: string;
+      description: string;
+      at: string;
+    };
+
 interface StoredState {
   home: Home | null;
   rooms: Room[];
   memories: Memory[];
   memoryObjects: MemoryObject[];
   conversation: { role: "user" | "companion"; content: string; at: string }[];
+  undoStack: UndoEntry[];
 }
 
 const emptyState: StoredState = {
@@ -28,16 +47,35 @@ const emptyState: StoredState = {
   memories: [],
   memoryObjects: [],
   conversation: [],
+  undoStack: [],
 };
+
+const UNDO_CAP = 20;
 
 function read(): StoredState {
   if (typeof window === "undefined") return emptyState;
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return emptyState;
-    return JSON.parse(raw) as StoredState;
+    const parsed = JSON.parse(raw) as Partial<StoredState>;
+    // Fill in any missing fields from legacy writes so the type is honest.
+    return {
+      home: parsed.home ?? null,
+      rooms: parsed.rooms ?? [],
+      memories: parsed.memories ?? [],
+      memoryObjects: parsed.memoryObjects ?? [],
+      conversation: parsed.conversation ?? [],
+      undoStack: parsed.undoStack ?? [],
+    };
   } catch {
     return emptyState;
+  }
+}
+
+function pushUndo(state: StoredState, entry: UndoEntry): void {
+  state.undoStack.push(entry);
+  if (state.undoStack.length > UNDO_CAP) {
+    state.undoStack = state.undoStack.slice(-UNDO_CAP);
   }
 }
 
@@ -113,6 +151,7 @@ export function createHome(companionName: string, companionPronouns = "they/them
     memories: [],
     memoryObjects: [],
     conversation: [],
+    undoStack: [],
   };
   write(state);
   return home;
@@ -211,6 +250,13 @@ export function captureMemory(input: CaptureInput): { memory: Memory; object: Me
 
   state.memories.push(memory);
   state.memoryObjects.push(object);
+  pushUndo(state, {
+    kind: "memory_capture",
+    memoryId: memory.id,
+    objectId: object.id,
+    description: `memory: ${memory.title ?? memory.body.slice(0, 40)}`,
+    at: now,
+  });
   write(state);
   return { memory, object };
 }
@@ -239,12 +285,62 @@ export function setWallColor(
   roomSlug: string,
   wall: "north" | "south" | "east" | "west",
   color: string,
+  colorName?: string,
 ): void {
   const state = read();
   const room = state.rooms.find((r) => r.slug === roomSlug);
   if (!room) return;
+  const before = room.wallColors[wall];
   room.wallColors = { ...room.wallColors, [wall]: color };
+  pushUndo(state, {
+    kind: "wall_color",
+    roomSlug,
+    wall,
+    before,
+    after: color,
+    description: `${wall} wall → ${colorName ?? color}`,
+    at: new Date().toISOString(),
+  });
   write(state);
+}
+
+// -----------------------------------------------------------------
+// Undo
+// -----------------------------------------------------------------
+
+export function peekUndo(): UndoEntry | null {
+  const stack = read().undoStack;
+  return stack.length > 0 ? stack[stack.length - 1] : null;
+}
+
+/**
+ * Reverse the most recent change and return a description of what was undone.
+ * Returns null if the stack is empty.
+ */
+export function undoLast(): UndoEntry | null {
+  const state = read();
+  const entry = state.undoStack.pop();
+  if (!entry) return null;
+
+  if (entry.kind === "wall_color") {
+    const room = state.rooms.find((r) => r.slug === entry.roomSlug);
+    if (room) {
+      if (entry.before === undefined) {
+        // Remove the key by spreading and re-building without it.
+        const next: Record<string, string> = { ...room.wallColors };
+        delete next[entry.wall];
+        room.wallColors = next as typeof room.wallColors;
+      } else {
+        room.wallColors = { ...room.wallColors, [entry.wall]: entry.before };
+      }
+    }
+  } else if (entry.kind === "memory_capture") {
+    state.memories = state.memories.filter((m) => m.id !== entry.memoryId);
+    state.memoryObjects = state.memoryObjects.filter((o) => o.id !== entry.objectId);
+  }
+
+  write(state);
+  return entry;
 }
 
 // -----------------------------------------------------------------

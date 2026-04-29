@@ -36,6 +36,7 @@ interface Props {
   recentMemories: Memory[];
   onCapture: (capture: CaptureMemoryArgs) => void;
   onWallColor: (args: ChangeWallColorArgs) => void;
+  onUndo: () => void;
   onTurn: (turn: ChatTurn) => void;
   handleRef?: React.MutableRefObject<ChatPanelHandle | null>;
 }
@@ -48,6 +49,7 @@ export function ChatPanel({
   recentMemories,
   onCapture,
   onWallColor,
+  onUndo,
   onTurn,
   handleRef,
 }: Props) {
@@ -137,6 +139,8 @@ export function ChatPanel({
                 onCapture(evt.args);
               } else if (evt.type === "wall_color" && evt.args) {
                 onWallColor(evt.args);
+              } else if (evt.type === "undo") {
+                onUndo();
               } else if (evt.type === "error" && evt.message) {
                 setError(evt.message);
               }
@@ -159,7 +163,7 @@ export function ChatPanel({
       setBusy(false);
       abortRef.current = null;
     },
-    [busy, companion, conversation, onCapture, onTurn, onWallColor, recentMemories, room, season],
+    [busy, companion, conversation, onCapture, onTurn, onUndo, onWallColor, recentMemories, room, season],
   );
 
   // Expose imperative dispatch to parent (for click-to-recall, etc.)

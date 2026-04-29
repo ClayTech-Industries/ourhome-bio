@@ -7,13 +7,18 @@
  * arc, not a settings form. Minimal chrome, breathable pacing.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createHome } from "@/lib/storage/local";
 
 export function Onboarding({ onComplete }: { onComplete: () => void }) {
   const [step, setStep] = useState<"welcome" | "name" | "pronouns">("welcome");
   const [name, setName] = useState("");
   const [pronouns, setPronouns] = useState("they/them");
+
+  useEffect(() => {
+    document.body.classList.add("no-scroll");
+    return () => document.body.classList.remove("no-scroll");
+  }, []);
 
   const handleName = () => {
     if (!name.trim()) return;
