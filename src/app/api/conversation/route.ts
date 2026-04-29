@@ -1,29 +1,27 @@
 /**
- * POST /api/conversation
+ * POST /api/conversation — streaming
  *
- * Non-streaming for Day 1 simplicity. Sprint 2 upgrades to SSE streaming.
+ * Returns Server-Sent Events. Event types:
+ *   - { type: "text", delta: string }
+ *   - { type: "capture", args: CaptureMemoryArgs }
+ *   - { type: "wall_color", args: ChangeWallColorArgs }
+ *   - { type: "done", stopReason: string | null }
+ *   - { type: "error", message: string }
  *
- * Request body: {
- *   companion: Companion,
- *   room: Room,
- *   season: string,
- *   conversation: ConversationTurn[],
- *   recentMemories: Memory[],
- *   userMessage: string,
- * }
- *
- * Response: {
- *   reply: string,
- *   captures: CaptureMemoryArgs[]  // zero or more memory captures the companion emitted
- * }
+ * The client accumulates text deltas into the companion's reply, and
+ * dispatches tool events as they arrive.
  */
 
 import Anthropic from "@anthropic-ai/sdk";
-import { NextResponse } from "next/server";
 import { z } from "zod";
-import { buildSystemPrompt, CAPTURE_MEMORY_TOOL } from "@/lib/llm/prompts";
+import {
+  buildSystemPrompt,
+  CAPTURE_MEMORY_TOOL,
+  CHANGE_WALL_COLOR_TOOL,
+} from "@/lib/llm/prompts";
 import {
   CaptureMemoryArgs,
+  ChangeWallColorArgs,
   Companion,
   ConversationTurn,
   Memory,
@@ -31,6 +29,7 @@ import {
 } from "@/lib/schema";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 const RequestBody = z.object({
   companion: Companion,
@@ -44,15 +43,22 @@ const RequestBody = z.object({
 
 const MODEL = "claude-sonnet-4-5";
 
+function sseEvent(obj: unknown): string {
+  return `data: ${JSON.stringify(obj)}\n\n`;
+}
+
 export async function POST(req: Request) {
   if (!process.env.ANTHROPIC_API_KEY) {
-    return NextResponse.json(
-      {
-        error: "missing_anthropic_key",
+    return new Response(
+      sseEvent({
+        type: "error",
         message:
           "No ANTHROPIC_API_KEY in environment. Add it to .env.local to talk to your companion.",
+      }) + sseEvent({ type: "done", stopReason: "missing_key" }),
+      {
+        status: 200,
+        headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-store" },
       },
-      { status: 503 },
     );
   }
 
@@ -61,9 +67,15 @@ export async function POST(req: Request) {
     const json = await req.json();
     parsed = RequestBody.parse(json);
   } catch (err) {
-    return NextResponse.json(
-      { error: "bad_request", detail: err instanceof Error ? err.message : String(err) },
-      { status: 400 },
+    return new Response(
+      sseEvent({
+        type: "error",
+        message: err instanceof Error ? err.message : "bad_request",
+      }) + sseEvent({ type: "done", stopReason: "bad_request" }),
+      {
+        status: 200,
+        headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-store" },
+      },
     );
   }
 
@@ -91,45 +103,57 @@ export async function POST(req: Request) {
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-  let response: Anthropic.Message;
-  try {
-    response = await client.messages.create({
-      model: MODEL,
-      max_tokens: 1024,
-      system,
-      messages,
-      tools: [CAPTURE_MEMORY_TOOL],
-    });
-  } catch (err) {
-    return NextResponse.json(
-      {
-        error: "anthropic_error",
-        detail: err instanceof Error ? err.message : String(err),
-      },
-      { status: 502 },
-    );
-  }
+  const encoder = new TextEncoder();
 
-  const replyParts: string[] = [];
-  const captures: CaptureMemoryArgs[] = [];
+  const stream = new ReadableStream({
+    async start(controller) {
+      const send = (obj: unknown) => controller.enqueue(encoder.encode(sseEvent(obj)));
 
-  for (const block of response.content) {
-    if (block.type === "text") {
-      replyParts.push(block.text);
-    } else if (block.type === "tool_use" && block.name === "capture_memory") {
-      const parsedCapture = CaptureMemoryArgs.safeParse(block.input);
-      if (parsedCapture.success) {
-        captures.push(parsedCapture.data);
+      try {
+        const ms = client.messages.stream({
+          model: MODEL,
+          max_tokens: 1024,
+          system,
+          messages,
+          tools: [CHANGE_WALL_COLOR_TOOL, CAPTURE_MEMORY_TOOL],
+        });
+
+        ms.on("text", (delta: string) => {
+          if (delta) send({ type: "text", delta });
+        });
+
+        const final = await ms.finalMessage();
+
+        for (const block of final.content) {
+          if (block.type !== "tool_use") continue;
+          if (block.name === "change_wall_color") {
+            const parsed = ChangeWallColorArgs.safeParse(block.input);
+            if (parsed.success) send({ type: "wall_color", args: parsed.data });
+          } else if (block.name === "capture_memory") {
+            const parsed = CaptureMemoryArgs.safeParse(block.input);
+            if (parsed.success) send({ type: "capture", args: parsed.data });
+          }
+        }
+
+        send({ type: "done", stopReason: final.stop_reason });
+      } catch (err) {
+        send({
+          type: "error",
+          message: err instanceof Error ? err.message : "anthropic_error",
+        });
+        send({ type: "done", stopReason: "error" });
+      } finally {
+        controller.close();
       }
-    }
-  }
+    },
+  });
 
-  const reply = replyParts.join("\n").trim();
-
-  return NextResponse.json({
-    reply: reply || "…",
-    captures,
-    model: MODEL,
-    stopReason: response.stop_reason,
+  return new Response(stream, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-store, no-transform",
+      Connection: "keep-alive",
+    },
   });
 }
