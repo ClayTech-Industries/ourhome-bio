@@ -10,7 +10,8 @@
  */
 
 import { useRef } from "react";
-import type { Mesh } from "three";
+import { useFrame } from "@react-three/fiber";
+import * as THREE from "three";
 import type { Room, MemoryObject, Memory } from "@/lib/schema";
 import { MemoryFrame } from "./MemoryFrame";
 
@@ -137,11 +138,20 @@ function Wall({
   height: number;
   color: string;
 }) {
-  const ref = useRef<Mesh>(null);
+  const matRef = useRef<THREE.MeshStandardMaterial>(null);
+  const targetColor = useRef(new THREE.Color(color));
+  // Update target when prop changes
+  targetColor.current.set(color);
+
+  useFrame(() => {
+    if (!matRef.current) return;
+    matRef.current.color.lerp(targetColor.current, 0.06);
+  });
+
   return (
-    <mesh ref={ref} position={position} rotation={[0, rotationY, 0]} receiveShadow>
+    <mesh position={position} rotation={[0, rotationY, 0]} receiveShadow>
       <planeGeometry args={[width, height]} />
-      <meshStandardMaterial color={color} roughness={0.95} />
+      <meshStandardMaterial ref={matRef} color={color} roughness={0.95} />
     </mesh>
   );
 }

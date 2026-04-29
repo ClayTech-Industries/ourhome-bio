@@ -189,6 +189,13 @@ export type ConversationTurn = z.infer<typeof ConversationTurn>;
 // Tool-call shape the companion emits when it decides to capture a memory
 // -----------------------------------------------------------------
 
+export const ChangeWallColorArgs = z.object({
+  wall: WallKey,
+  color: HexColor,
+  colorName: z.string().max(80).optional(),
+});
+export type ChangeWallColorArgs = z.infer<typeof ChangeWallColorArgs>;
+
 export const CaptureMemoryArgs = z.object({
   type: MemoryType,
   title: z.string().min(1).max(120),

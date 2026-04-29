@@ -230,3 +230,33 @@ export function getRoom(slug: string): Room | null {
 export function getHome(): Home | null {
   return read().home;
 }
+
+// -----------------------------------------------------------------
+// Wall color mutation
+// -----------------------------------------------------------------
+
+export function setWallColor(
+  roomSlug: string,
+  wall: "north" | "south" | "east" | "west",
+  color: string,
+): void {
+  const state = read();
+  const room = state.rooms.find((r) => r.slug === roomSlug);
+  if (!room) return;
+  room.wallColors = { ...room.wallColors, [wall]: color };
+  write(state);
+}
+
+// -----------------------------------------------------------------
+// Memory access bump — called when a frame is clicked
+// -----------------------------------------------------------------
+
+export function bumpMemoryAccess(memoryId: string): Memory | null {
+  const state = read();
+  const memory = state.memories.find((m) => m.id === memoryId);
+  if (!memory) return null;
+  memory.accessCount += 1;
+  memory.lastAccessed = new Date().toISOString();
+  write(state);
+  return memory;
+}

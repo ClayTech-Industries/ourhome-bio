@@ -1,18 +1,31 @@
 "use client";
 
 /**
- * ChatPanel — intimate, low-chrome conversation surface.
+ * ChatPanel — streaming, low-chrome conversation surface.
  *
- * Deliberately not a "chatbot UI". No avatars, no "AI thinking" indicator beyond
- * a single pulsing dot. Designed to recede into the room.
+ * Consumes SSE events from /api/conversation:
+ *   - text delta: accumulates into a live "streaming" turn visible as it arrives
+ *   - capture: forwarded to parent to place a memory frame
+ *   - wall_color: forwarded to parent to animate a wall
+ *   - done: finalize the streaming turn as a completed companion turn
  */
 
-import { useEffect, useRef, useState } from "react";
-import type { CaptureMemoryArgs, Companion, Memory, Room } from "@/lib/schema";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type {
+  CaptureMemoryArgs,
+  ChangeWallColorArgs,
+  Companion,
+  Memory,
+  Room,
+} from "@/lib/schema";
 
 export interface ChatTurn {
   role: "user" | "companion";
   content: string;
+}
+
+export interface ChatPanelHandle {
+  dispatch: (message: string, options?: { silent?: boolean }) => Promise<void>;
 }
 
 interface Props {
@@ -21,58 +34,152 @@ interface Props {
   season: string;
   conversation: ChatTurn[];
   recentMemories: Memory[];
-  onSend: (userMessage: string) => Promise<{
-    reply: string;
-    captures: CaptureMemoryArgs[];
-    error?: string;
-  }>;
   onCapture: (capture: CaptureMemoryArgs) => void;
+  onWallColor: (args: ChangeWallColorArgs) => void;
   onTurn: (turn: ChatTurn) => void;
+  handleRef?: React.MutableRefObject<ChatPanelHandle | null>;
 }
 
 export function ChatPanel({
   companion,
+  room,
+  season,
   conversation,
-  onSend,
+  recentMemories,
   onCapture,
+  onWallColor,
   onTurn,
+  handleRef,
 }: Props) {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [streaming, setStreaming] = useState("");
   const [error, setError] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
-  }, [conversation.length, busy]);
+    listRef.current?.scrollTo({
+      top: listRef.current.scrollHeight,
+      behavior: "smooth",
+    });
+  }, [conversation.length, streaming, busy]);
 
-  const send = async () => {
-    const text = input.trim();
-    if (!text || busy) return;
-    setBusy(true);
-    setError(null);
-    setInput("");
-    onTurn({ role: "user", content: text });
+  const dispatch = useCallback(
+    async (userMessage: string, options?: { silent?: boolean }) => {
+      if (busy) return;
+      const text = userMessage.trim();
+      if (!text) return;
+      setBusy(true);
+      setStreaming("");
+      setError(null);
 
-    try {
-      const { reply, captures, error: apiError } = await onSend(text);
-      if (apiError) {
-        setError(apiError);
+      if (!options?.silent) {
+        onTurn({ role: "user", content: text });
+      }
+
+      const controller = new AbortController();
+      abortRef.current = controller;
+
+      let res: Response;
+      try {
+        res = await fetch("/api/conversation", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            companion,
+            room,
+            season,
+            conversation: conversation.map((t) => ({
+              role: t.role,
+              content: t.content,
+            })),
+            recentMemories,
+            userMessage: text,
+          }),
+          signal: controller.signal,
+        });
+      } catch (err) {
+        setBusy(false);
+        setError(err instanceof Error ? err.message : "Network error.");
         return;
       }
-      onTurn({ role: "companion", content: reply });
-      for (const c of captures) onCapture(c);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong.");
-    } finally {
+
+      if (!res.ok || !res.body) {
+        setBusy(false);
+        setError(`HTTP ${res.status}`);
+        return;
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let accumulated = "";
+
+      try {
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          // Parse complete SSE events (separated by blank line)
+          let idx: number;
+          while ((idx = buffer.indexOf("\n\n")) !== -1) {
+            const rawEvent = buffer.slice(0, idx);
+            buffer = buffer.slice(idx + 2);
+            const line = rawEvent.split("\n").find((l) => l.startsWith("data: "));
+            if (!line) continue;
+            try {
+              const evt = JSON.parse(line.slice(6));
+              if (evt.type === "text" && typeof evt.delta === "string") {
+                accumulated += evt.delta;
+                setStreaming(accumulated);
+              } else if (evt.type === "capture" && evt.args) {
+                onCapture(evt.args);
+              } else if (evt.type === "wall_color" && evt.args) {
+                onWallColor(evt.args);
+              } else if (evt.type === "error" && evt.message) {
+                setError(evt.message);
+              }
+            } catch {
+              // ignore malformed
+            }
+          }
+        }
+      } catch (err) {
+        if ((err as { name?: string }).name !== "AbortError") {
+          setError(err instanceof Error ? err.message : "Stream error.");
+        }
+      }
+
+      const final = accumulated.trim();
+      if (final) {
+        onTurn({ role: "companion", content: final });
+      }
+      setStreaming("");
       setBusy(false);
-    }
+      abortRef.current = null;
+    },
+    [busy, companion, conversation, onCapture, onTurn, onWallColor, recentMemories, room, season],
+  );
+
+  // Expose imperative dispatch to parent (for click-to-recall, etc.)
+  useEffect(() => {
+    if (!handleRef) return;
+    handleRef.current = { dispatch };
+    return () => {
+      if (handleRef.current?.dispatch === dispatch) handleRef.current = null;
+    };
+  }, [dispatch, handleRef]);
+
+  const send = () => {
+    const text = input.trim();
+    if (!text) return;
+    setInput("");
+    void dispatch(text);
   };
 
   const placeholder =
-    conversation.length === 0
-      ? `Say something to ${companion.name}…`
-      : "…";
+    conversation.length === 0 ? `Say something to ${companion.name}…` : "…";
 
   return (
     <div className="flex h-full flex-col">
@@ -85,13 +192,10 @@ export function ChatPanel({
         </div>
       </div>
 
-      <div
-        ref={listRef}
-        className="flex-1 overflow-y-auto px-5 py-3 space-y-4 scrollbar-thin"
-      >
-        {conversation.length === 0 && (
+      <div ref={listRef} className="flex-1 overflow-y-auto px-5 py-3 space-y-4 scrollbar-thin">
+        {conversation.length === 0 && !streaming && !busy && (
           <div className="text-amber-100/40 text-sm italic leading-relaxed">
-            You're here. {companion.name} is somewhere in the house.
+            You&apos;re here. {companion.name} is somewhere in the house.
             <br />
             Say something, or just sit with it for a moment.
           </div>
@@ -110,10 +214,16 @@ export function ChatPanel({
           </div>
         ))}
 
-        {busy && (
+        {streaming && (
+          <div className="text-amber-200/85 text-[15px] leading-relaxed italic">
+            {streaming}
+            <span className="inline-block h-[1em] w-[2px] ml-0.5 align-middle bg-amber-200/60 animate-pulse" />
+          </div>
+        )}
+
+        {busy && !streaming && (
           <div className="flex items-center gap-2 text-amber-200/50 text-sm">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-200/70 animate-pulse" />
-            <span className="italic">…</span>
           </div>
         )}
 
