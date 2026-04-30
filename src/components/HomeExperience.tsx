@@ -17,6 +17,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SceneCanvas } from "@/components/scene/SceneCanvas";
 import { LivingRoom } from "@/components/scene/LivingRoom";
+import { Kitchen } from "@/components/scene/Kitchen";
 import {
   ChatPanel,
   type ChatPanelHandle,
@@ -33,11 +34,14 @@ import {
   bumpMemoryAccess,
   captureMemory,
   getConversation,
+  getCurrentRoomSlug,
   getHome,
   getMemories,
   getMemoryObjects,
   getRoom,
+  getRooms,
   resetHome,
+  setCurrentRoom,
   setWallColor,
   subscribe,
   undoLast,
@@ -107,10 +111,17 @@ export function HomeExperience() {
   }, []);
 
   const home = getHome();
-  const room = getRoom("living_room");
+  const currentRoomSlug = getCurrentRoomSlug();
+  const room = getRoom(currentRoomSlug);
+  const rooms = getRooms();
   const memories = getMemories();
   const memoryObjects = getMemoryObjects();
   const conversation = getConversation();
+
+  const handleRoomChange = useCallback((slug: string) => {
+    setCurrentRoom(slug);
+    setTick((t) => t + 1);
+  }, []);
 
   const memoriesById = useMemo(() => {
     const map: Record<string, Memory> = {};
@@ -149,8 +160,8 @@ export function HomeExperience() {
   }, []);
 
   const handleWallColor = useCallback((args: ChangeWallColorArgs) => {
-    setWallColor("living_room", args.wall, args.color, args.colorName);
-  }, []);
+    setWallColor(currentRoomSlug, args.wall, args.color, args.colorName);
+  }, [currentRoomSlug]);
 
   const handleUndo = useCallback(() => {
     undoLast();
@@ -209,16 +220,46 @@ export function HomeExperience() {
       {/* Scene */}
       <div className="absolute inset-0">
         <SceneCanvas>
-          <LivingRoom
-            room={room}
-            memoryObjects={memoryObjects}
-            memoriesById={memoriesById}
-            onFrameClick={handleFrameClick}
-            highlightedMemoryId={highlighted}
-            recentlyPlacedMemoryId={justPlaced}
-            key={tick}
-          />
+          {currentRoomSlug === "kitchen" ? (
+            <Kitchen
+              room={room}
+              memoryObjects={memoryObjects}
+              memoriesById={memoriesById}
+              onFrameClick={handleFrameClick}
+              highlightedMemoryId={highlighted}
+              recentlyPlacedMemoryId={justPlaced}
+              key={tick}
+            />
+          ) : (
+            <LivingRoom
+              room={room}
+              memoryObjects={memoryObjects}
+              memoriesById={memoriesById}
+              onFrameClick={handleFrameClick}
+              highlightedMemoryId={highlighted}
+              recentlyPlacedMemoryId={justPlaced}
+              key={tick}
+            />
+          )}
         </SceneCanvas>
+      </div>
+
+      {/* Room navigation — bottom center */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 z-10">
+        {rooms.map((r) => (
+          <button
+            key={r.slug}
+            onClick={() => handleRoomChange(r.slug)}
+            className={`px-3 py-1.5 rounded-md text-[10px] tracking-[0.15em] uppercase transition-colors border ${
+              r.slug === currentRoomSlug
+                ? "bg-amber-100/15 border-amber-100/30 text-amber-100/90"
+                : "bg-black/40 border-amber-200/10 text-amber-100/40 hover:text-amber-100/70 hover:border-amber-200/20"
+            }`}
+            title={r.name}
+          >
+            {r.name}
+          </button>
+        ))}
       </div>
 
       {/* Top-left: home name + meta */}

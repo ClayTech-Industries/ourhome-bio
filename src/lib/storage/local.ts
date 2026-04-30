@@ -39,6 +39,7 @@ interface StoredState {
   memoryObjects: MemoryObject[];
   conversation: { role: "user" | "companion"; content: string; at: string }[];
   undoStack: UndoEntry[];
+  currentRoomSlug: string;
 }
 
 const emptyState: StoredState = {
@@ -48,6 +49,7 @@ const emptyState: StoredState = {
   memoryObjects: [],
   conversation: [],
   undoStack: [],
+  currentRoomSlug: "living_room",
 };
 
 const UNDO_CAP = 20;
@@ -66,6 +68,7 @@ function read(): StoredState {
       memoryObjects: parsed.memoryObjects ?? [],
       conversation: parsed.conversation ?? [],
       undoStack: parsed.undoStack ?? [],
+      currentRoomSlug: parsed.currentRoomSlug ?? "living_room",
     };
   } catch {
     return emptyState;
@@ -145,13 +148,30 @@ export function createHome(companionName: string, companionPronouns = "they/them
     createdAt: now,
   };
 
+  const kitchen: Room = {
+    id: crypto.randomUUID(),
+    slug: "kitchen",
+    name: "Kitchen",
+    type: "kitchen",
+    wallColors: {
+      north: "#F0E6D3",
+      south: "#F0E6D3",
+      east: "#E2D5C5",
+      west: "#F0E6D3",
+    },
+    lighting: { preset: "morning", intensity: 1.1 },
+    unlocked: true,
+    createdAt: now,
+  };
+
   const state: StoredState = {
     home,
-    rooms: [livingRoom],
+    rooms: [livingRoom, kitchen],
     memories: [],
     memoryObjects: [],
     conversation: [],
     undoStack: [],
+    currentRoomSlug: "living_room",
   };
   write(state);
   return home;
@@ -271,6 +291,22 @@ export function getMemoryObjects(): MemoryObject[] {
 
 export function getRoom(slug: string): Room | null {
   return read().rooms.find((r) => r.slug === slug) ?? null;
+}
+
+export function getRooms(): Room[] {
+  return read().rooms;
+}
+
+export function getCurrentRoomSlug(): string {
+  return read().currentRoomSlug;
+}
+
+export function setCurrentRoom(slug: string): void {
+  const state = read();
+  const room = state.rooms.find((r) => r.slug === slug);
+  if (!room) return;
+  state.currentRoomSlug = slug;
+  write(state);
 }
 
 export function getHome(): Home | null {
