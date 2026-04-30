@@ -7,13 +7,41 @@
  * arc, not a settings form. Minimal chrome, breathable pacing.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createHome } from "@/lib/storage/local";
+
+function StepWrapper({
+  children,
+  visible,
+}: {
+  children: React.ReactNode;
+  visible: boolean;
+}) {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    if (visible) {
+      const t = setTimeout(() => setShow(true), 20);
+      return () => clearTimeout(t);
+    }
+    setShow(false);
+  }, [visible]);
+  if (!visible) return null;
+  return (
+    <div
+      className={`transition-all duration-700 ease-out ${
+        show ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+      }`}
+    >
+      {children}
+    </div>
+  );
+}
 
 export function Onboarding({ onComplete }: { onComplete: () => void }) {
   const [step, setStep] = useState<"welcome" | "name" | "pronouns">("welcome");
   const [name, setName] = useState("");
   const [pronouns, setPronouns] = useState("they/them");
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     document.body.classList.add("no-scroll");
@@ -30,10 +58,17 @@ export function Onboarding({ onComplete }: { onComplete: () => void }) {
     onComplete();
   };
 
+  useEffect(() => {
+    if (step === "name" || step === "pronouns") {
+      const t = setTimeout(() => inputRef.current?.focus(), 350);
+      return () => clearTimeout(t);
+    }
+  }, [step]);
+
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-[#1a0f0a] text-amber-50">
       <div className="w-full max-w-md px-8">
-        {step === "welcome" && (
+        <StepWrapper visible={step === "welcome"}>
           <div className="space-y-10 text-center">
             <div className="text-6xl font-serif tracking-tight text-amber-100/95">
               It Holds Time.
@@ -50,15 +85,15 @@ export function Onboarding({ onComplete }: { onComplete: () => void }) {
               come home
             </button>
           </div>
-        )}
+        </StepWrapper>
 
-        {step === "name" && (
+        <StepWrapper visible={step === "name"}>
           <div className="space-y-8">
             <p className="text-amber-100/70 leading-relaxed">
               Before we begin — what should your companion be called?
             </p>
             <input
-              autoFocus
+              ref={inputRef}
               value={name}
               onChange={(e) => setName(e.target.value)}
               onKeyDown={(e) => {
@@ -84,9 +119,9 @@ export function Onboarding({ onComplete }: { onComplete: () => void }) {
               </button>
             </div>
           </div>
-        )}
+        </StepWrapper>
 
-        {step === "pronouns" && (
+        <StepWrapper visible={step === "pronouns"}>
           <div className="space-y-8">
             <p className="text-amber-100/70 leading-relaxed">
               And how will you refer to {name.trim()}?
@@ -121,7 +156,7 @@ export function Onboarding({ onComplete }: { onComplete: () => void }) {
               </button>
             </div>
           </div>
-        )}
+        </StepWrapper>
       </div>
     </div>
   );

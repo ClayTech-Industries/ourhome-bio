@@ -11,6 +11,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { StreamingMessage, RevealedMessage } from "./StreamingMessage";
 import type {
   CaptureMemoryArgs,
   ChangeWallColorArgs,
@@ -214,14 +215,17 @@ export function ChatPanel({
                 : "text-amber-200/85 text-[15px] leading-relaxed italic"
             }
           >
-            {turn.content}
+            {turn.role === "companion" ? (
+              <RevealedMessage text={turn.content} />
+            ) : (
+              turn.content
+            )}
           </div>
         ))}
 
         {streaming && (
           <div className="text-amber-200/85 text-[15px] leading-relaxed italic">
-            {streaming}
-            <span className="inline-block h-[1em] w-[2px] ml-0.5 align-middle bg-amber-200/60 animate-pulse" />
+            <StreamingMessage text={streaming} isComplete={false} />
           </div>
         )}
 

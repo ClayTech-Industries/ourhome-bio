@@ -37,6 +37,7 @@ import {
   getMemoryObjects,
   getRoom,
   getRooms,
+  pickMemoryForProactiveRecall,
   resetHome,
   setCurrentRoom,
   setWallColor,
@@ -106,6 +107,42 @@ export function HomeExperience() {
   useEffect(() => {
     document.body.classList.add("no-scroll");
     return () => document.body.classList.remove("no-scroll");
+  }, []);
+
+  // Proactive recall: companion brings up an old memory after idle period
+  useEffect(() => {
+    const IDLE_MS = 30_000; // 30 seconds of inactivity
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    const scheduleRecall = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        const mem = pickMemoryForProactiveRecall();
+        if (mem && chatRef.current) {
+          const label = mem.title ?? mem.body.slice(0, 40);
+          const intros = [
+            `I was just thinking about ${label}...`,
+            `Do you remember ${label}? It came to mind just now.`,
+            `That memory about ${label} — it still lingers here.`,
+          ];
+          const intro = intros[Math.floor(Math.random() * intros.length)];
+          void chatRef.current.dispatch(intro, { silent: true });
+        }
+      }, IDLE_MS);
+    };
+
+    // Schedule initial recall timer
+    scheduleRecall();
+
+    // Reset timer on any user interaction
+    const resetEvents = ["click", "keydown", "touchstart"];
+    const resetHandler = () => scheduleRecall();
+    resetEvents.forEach((evt) => window.addEventListener(evt, resetHandler));
+
+    return () => {
+      if (timer) clearTimeout(timer);
+      resetEvents.forEach((evt) => window.removeEventListener(evt, resetHandler));
+    };
   }, []);
 
   const home = getHome();
