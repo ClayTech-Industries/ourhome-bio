@@ -212,3 +212,23 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
+
+-- -----------------------------------------------------------------
+-- user_home_state
+-- Snapshot of localStorage state for cloud backup/sync.
+-- -----------------------------------------------------------------
+create table public.user_home_state (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  home jsonb not null,
+  memories jsonb not null default '[]'::jsonb,
+  objects jsonb not null default '[]'::jsonb,
+  last_synced_at timestamptz not null default now(),
+  created_at timestamptz not null default now()
+);
+
+alter table public.user_home_state enable row level security;
+
+create policy "user_home_state_own" on public.user_home_state
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+create index user_home_state_synced_idx on public.user_home_state (user_id, last_synced_at desc);

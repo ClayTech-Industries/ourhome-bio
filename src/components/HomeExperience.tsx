@@ -10,6 +10,7 @@
  *  - frame click → dispatches a silent "looking at <title>" turn that
  *    triggers a recall in-character
  *  - export → downloads a ZIP of markdown memories
+ *  - auth → Supabase user session (when configured)
  */
 
 import Link from "next/link";
@@ -25,6 +26,7 @@ import type {
   CaptureMemoryArgs,
   ChangeWallColorArgs,
   Memory,
+  UserProfile,
 } from "@/lib/schema";
 import {
   appendTurn,
@@ -40,14 +42,64 @@ import {
   subscribe,
   undoLast,
 } from "@/lib/storage/local";
+import { createBrowserSupabase } from "@/lib/db/supabase";
 
 export function HomeExperience() {
   const [tick, setTick] = useState(0);
   const [highlighted, setHighlighted] = useState<string | null>(null);
   const [justPlaced, setJustPlaced] = useState<string | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [supabaseConfigured, setSupabaseConfigured] = useState(false);
   const chatRef = useRef<ChatPanelHandle | null>(null);
+  const supabase = useMemo(() => createBrowserSupabase(), []);
 
+  // Subscribe to localStorage changes
   useEffect(() => subscribe(() => setTick((t) => t + 1)), []);
+
+  // Check Supabase auth state
+  useEffect(() => {
+    if (!supabase) {
+      setSupabaseConfigured(false);
+      return;
+    }
+    setSupabaseConfigured(true);
+
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser({
+          id: session.user.id,
+          email: session.user.email,
+          name: session.user.user_metadata?.name ?? session.user.email,
+          avatarUrl: session.user.user_metadata?.avatar_url,
+          provider: session.user.app_metadata?.provider as "github" | "google" | "email" | undefined,
+          createdAt: session.user.created_at,
+          lastLogin: new Date().toISOString(),
+        });
+      }
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (session?.user) {
+          setUser({
+            id: session.user.id,
+            email: session.user.email,
+            name: session.user.user_metadata?.name ?? session.user.email,
+            avatarUrl: session.user.user_metadata?.avatar_url,
+            provider: session.user.app_metadata?.provider as "github" | "google" | "email" | undefined,
+            createdAt: session.user.created_at,
+            lastLogin: new Date().toISOString(),
+          });
+        } else {
+          setUser(null);
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, [supabase]);
 
   useEffect(() => {
     document.body.classList.add("no-scroll");
@@ -144,6 +196,12 @@ export function HomeExperience() {
     }
   }, [home, memories]);
 
+  const handleLogout = useCallback(async () => {
+    if (!supabase) return;
+    await supabase.auth.signOut();
+    setUser(null);
+  }, [supabase]);
+
   if (!home || !room) return null;
 
   return (
@@ -196,6 +254,38 @@ export function HomeExperience() {
         >
           reset
         </button>
+        {/* Auth: Login or User */}
+        {supabaseConfigured ? (
+          user ? (
+            <div className="flex items-center gap-2">
+              {user.avatarUrl ? (
+                <img
+                  src={user.avatarUrl}
+                  alt={user.name ?? "User"}
+                  className="w-6 h-6 rounded-full border border-amber-200/20"
+                />
+              ) : (
+                <div className="w-6 h-6 rounded-full bg-amber-100/20 flex items-center justify-center text-[8px] text-amber-100/60">
+                  {user.name?.[0]?.toUpperCase() ?? "?"}
+                </div>
+              )}
+              <button
+                onClick={handleLogout}
+                className="text-amber-100/30 hover:text-amber-100/70 text-[10px] tracking-[0.18em] uppercase"
+                title="Sign out"
+              >
+                logout
+              </button>
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              className="text-amber-100/50 hover:text-amber-100/85 text-[10px] tracking-[0.18em] uppercase"
+            >
+              login
+            </Link>
+          )
+        ) : null}
       </div>
 
       {/* Chat — lower right, semi-translucent */}
