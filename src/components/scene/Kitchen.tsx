@@ -132,14 +132,17 @@ export function Kitchen({
       </mesh>
 
       {/* Walls */}
-      {Object.entries(wallPositions).map(([key, [x, y, z, rx, ry, rz]]) => (
-        <AnimatedWall
-          key={key}
-          position={[x, y, z]}
-          rotation={[rx, ry, rz]}
-          targetColor={wc[key] ?? "#F0E6D3"}
-        />
-      ))}
+      {Object.entries(wallPositions).map(([key, [x, y, z, rx, ry, rz]]) => {
+        const wallKey = key as "north" | "south" | "east" | "west";
+        return (
+          <AnimatedWall
+            key={key}
+            position={[x, y, z]}
+            rotation={[rx, ry, rz]}
+            targetColor={wc[wallKey] ?? "#F0E6D3"}
+          />
+        );
+      })}
 
       {/* Ceiling */}
       <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 3, 0]}>
@@ -171,10 +174,10 @@ export function Kitchen({
         return (
           <MemoryFrame
             key={obj.id}
-            position={obj.position}
+            object={obj}
             memory={memory}
-            isHighlighted={isHighlighted}
-            isNew={isNew}
+            highlighted={isHighlighted}
+            justPlaced={isNew}
             onClick={() => onFrameClick?.(memory.id)}
           />
         );
