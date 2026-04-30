@@ -392,3 +392,25 @@ export function bumpMemoryAccess(memoryId: string): Memory | null {
   write(state);
   return memory;
 }
+
+// -----------------------------------------------------------------
+// Proactive recall — select an old, unvisited memory for companion
+// to bring up unprompted. Returns null if no suitable memory found.
+// -----------------------------------------------------------------
+
+export function pickMemoryForProactiveRecall(): Memory | null {
+  const state = read();
+  const now = Date.now();
+  // Candidates: memories older than 2 minutes, low access count, some importance
+  const candidates = state.memories.filter((m) => {
+    const ageMs = now - new Date(m.createdAt).getTime();
+    const isOldEnough = ageMs > 2 * 60 * 1000;
+    const isNeglected = m.accessCount < 3;
+    const hasWeight = (m.importance ?? 0.5) > 0.3;
+    return isOldEnough && isNeglected && hasWeight;
+  });
+  if (candidates.length === 0) return null;
+  // Pick the least recently accessed
+  candidates.sort((a, b) => new Date(a.lastAccessed).getTime() - new Date(b.lastAccessed).getTime());
+  return candidates[0];
+}
