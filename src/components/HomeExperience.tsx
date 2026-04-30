@@ -18,11 +18,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SceneCanvas } from "@/components/scene/SceneCanvas";
 import { LivingRoom } from "@/components/scene/LivingRoom";
 import { Kitchen } from "@/components/scene/Kitchen";
-import {
-  ChatPanel,
-  type ChatPanelHandle,
-  type ChatTurn,
-} from "@/components/chat/ChatPanel";
+import { MemoryDetailPanel } from "@/components/MemoryDetailPanel";
+import { ChatPanel, type ChatPanelHandle, type ChatTurn } from "@/components/chat/ChatPanel";
 import type {
   CaptureMemoryArgs,
   ChangeWallColorArgs,
@@ -52,6 +49,7 @@ export function HomeExperience() {
   const [tick, setTick] = useState(0);
   const [highlighted, setHighlighted] = useState<string | null>(null);
   const [justPlaced, setJustPlaced] = useState<string | null>(null);
+  const [selectedMemoryId, setSelectedMemoryId] = useState<string | null>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [supabaseConfigured, setSupabaseConfigured] = useState(false);
   const chatRef = useRef<ChatPanelHandle | null>(null);
@@ -118,6 +116,10 @@ export function HomeExperience() {
   const memoryObjects = getMemoryObjects();
   const conversation = getConversation();
 
+  const selectedMemory = useMemo(() => {
+    return selectedMemoryId ? memories.find((m) => m.id === selectedMemoryId) ?? null : null;
+  }, [selectedMemoryId, memories]);
+
   const handleRoomChange = useCallback((slug: string) => {
     setCurrentRoom(slug);
     setTick((t) => t + 1);
@@ -174,9 +176,12 @@ export function HomeExperience() {
       3200,
     );
     const mem = bumpMemoryAccess(memoryId);
-    if (mem && chatRef.current) {
-      const label = mem.title ?? mem.body.slice(0, 40);
-      void chatRef.current.dispatch(`*(looks at the frame of "${label}")*`);
+    if (mem) {
+      setSelectedMemoryId(memoryId);
+      if (chatRef.current) {
+        const label = mem.title ?? mem.body.slice(0, 40);
+        void chatRef.current.dispatch(`*(looks at the frame of "${label}")*`);
+      }
     }
   }, []);
 
@@ -344,6 +349,14 @@ export function HomeExperience() {
           handleRef={chatRef}
         />
       </div>
+
+      {/* Memory detail overlay */}
+      {selectedMemory && (
+        <MemoryDetailPanel
+          memory={selectedMemory}
+          onClose={() => setSelectedMemoryId(null)}
+        />
+      )}
     </div>
   );
 }

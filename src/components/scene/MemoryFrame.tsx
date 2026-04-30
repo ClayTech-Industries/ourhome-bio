@@ -56,10 +56,25 @@ export function MemoryFrame({ object, memory, highlighted, justPlaced, onClick }
   });
 
   const scale = progress * (hovered ? 1.06 : 1);
-  const patina = object.visualState?.patina ?? 0;
+
+  // Compute dynamic patina from memory metadata: age, access count, stored patina
+  const ageMs = Date.now() - new Date(memory.createdAt).getTime();
+  const daysOld = Math.min(1, ageMs / (1000 * 60 * 60 * 24 * 30)); // 30 days → max
+  const accessFactor = Math.min(1, memory.accessCount / 10); // 10 accesses → no patina
+  const storedPatina = memory.patina ?? 0;
+  const dynamicPatina = Math.min(1, (storedPatina * 0.5) + (daysOld * 0.4) - (accessFactor * 0.3));
+  const objectPatina = object.visualState?.patina ?? 0;
+  const patina = Math.min(1, dynamicPatina + objectPatina);
+
+  // Colors shift toward sepia / muted brown as patina grows
   const frameColor = new THREE.Color("#2a1f18").lerp(new THREE.Color("#6b5338"), patina);
-  const innerColor = new THREE.Color("#FFE6B5").lerp(new THREE.Color("#D9B887"), patina);
-  const emissive = new THREE.Color("#FFCE88").lerp(new THREE.Color("#A07042"), patina);
+  const innerColor = new THREE.Color("#FFE6B5").lerp(new THREE.Color("#C9B896"), patina);
+  // Emotional valence tints emissive: warm gold (positive) vs cool slate (negative)
+  const valence = memory.emotionalValence ?? 0;
+  const positiveEmissive = new THREE.Color("#FFCE88");
+  const negativeEmissive = new THREE.Color("#8A9BA8");
+  const baseEmissive = positiveEmissive.lerp(negativeEmissive, Math.max(0, -valence * 0.5));
+  const emissive = baseEmissive.lerp(new THREE.Color("#A07042"), patina);
 
   const frameW = 0.55;
   const frameH = 0.7;
