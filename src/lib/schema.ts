@@ -206,3 +206,18 @@ export const CaptureMemoryArgs = z.object({
   tags: z.array(z.string()).max(12).default([]),
 });
 export type CaptureMemoryArgs = z.infer<typeof CaptureMemoryArgs>;
+
+// -----------------------------------------------------------------
+// User Profile (from Supabase Auth)
+// -----------------------------------------------------------------
+
+export const UserProfile = z.object({
+  id: UUID,
+  email: z.string().email().optional(),
+  name: z.string().optional(),
+  avatarUrl: z.string().url().optional(),
+  provider: z.enum(["github", "google", "email"]).optional(),
+  createdAt: z.string().datetime(),
+  lastLogin: z.string().datetime(),
+});
+export type UserProfile = z.infer<typeof UserProfile>;
