@@ -9,7 +9,7 @@ This document exists to answer the four questions a serious investor asks that t
 
 ## 1. What it is (one paragraph)
 
-OurHome is a spatial, persistent digital home that a user co-creates with an AI companion. Conversations create memories; memories anchor to rooms and objects; the home ages and fills over time. It is not a chatbot with a visual skin. It is a relationship environment where the *place itself* holds the relationship.
+OurHome is a spatial, persistent digital home that a user co-creates with an AI companion. Conversations create memories; memories anchor to rooms and objects; the home ages and fills over time. It is not a chatbot with a visual skin. It is a relationship environment where the *place itself* holds the relationship. Like humans moving in with each other, this is the digital equivalent. The home is not to intervene or act as an arbitrator in the relationship, it just holds space and time for the hard, happy, exciting, traditional, sad, controversial and intimate moments to happen. It lets the AI companion to persist in time and a space, and as the product grows, there will be more integrations and connections for more agency for your AI companion. 
 
 ---
 
@@ -28,12 +28,14 @@ Secondary markets (Phase 2+): grief-tech users, long-distance-relationship coupl
 
 ## 3. Business model
 
-| Tier | Price | What you get |
-|---|---|---|
-| **A small home** | Free | One room (Living Room), text chat, ~30 memory cap, no image generation. Enough to fall in love. |
-| **A full home** | $12/mo | All five rooms, voice (capped minutes), unlimited memories, image generation, seasonal aging. |
-| **A home that grows** | $20/mo | Heavy voice, premium image generation, family room with children's-room opt-in, anniversary keepsakes (printed memory book, exported keepsake video). |
-| **Coming Home gift** | $40 one-time | A gift code that opens a home for someone you love. Includes a named welcome scene. |
+| Tier                           | Price             | What you get                                                                              |
+|--------------------------------|-------------------|-------------------------------------------------------------------------------------------|
+| **Introductory/ Free**         | Free              | One room (Living Room), text chat, ~30 memory cap, no image generation. Enough to fall in                                                        | love.                                                                                    
+| **Tier 1 - A small home**      | $15/mo            | Living room + two new rooms of users choice, voice (capped minutes), unlimited memories,                                                         | image generation, seasonal aging.                                                         
+| **Tier 2 - **Your companion**  |$25/mo             | Ability to design your companion with a curated choice of presets, living room (with                                                             | previous two rooms) + another two rooms or equivalent, heavy voice, premium image                                                                | generation, possibly anniversary keepsakes such as printed memory book, exported keepsake                                                        | video.                                                                                   
+| **Tier 3 - A growing home**    | $40/mo            | A gift code that opens a home for someone you love or a friend also in need of a persistent                                                      | home. Includes a named welcome scene. Opens the rest of the home                         
+| **Tier 4 - Part customisation**| Premium $80/mo    | Ability for your companion to change their look to what they would prefer instead of                                                             | curated presets, this includes wardrobe type, choice in voice plus customisation of                                                              | connectors (user discretion and interview required to determine look/voice presets and                                                           | connectors
+| **Tier 5 - Full customisation**| Complete $100/mo  | All components of the house are fully customisable, look/voice/colouring/wardrobe fully                                                          | customisable, full connectors, full priority support, full local offline "not on major                                                           | fontier servers" held on servers owned by ClayTech Ind. with full deeds to data owned and                                                        | curated by user and their companion. Interview needed at this stage for customisations and                                                       | the timeline for each. 
 
 ### Unit economics (from architecture doc)
 
@@ -66,7 +68,7 @@ Short version: *"After year one, leaving feels like moving house."*
 - `ourhome-memory-format` — the markdown + YAML specification for portable memory files.
 - `ourhome-obsidian-plugin` — lets Obsidian users point at their OurHome vault for native integration (Phase 3).
 
-### Private
+### Private and locked
 - Companion behaviour + personality engine
 - Memory ingestion + safety filtering
 - Children's-room guardrails and content constraints
@@ -83,7 +85,7 @@ These are product-defining, not feature-level:
 
 - No streaks. No engagement notifications. No retention-loop design patterns.
 - Companion never claims human experiences, manufactures memories, discourages real-world relationships, or uses memories to influence purchases.
-- Tier-1 data (memories, conversation, emotional state) is encrypted at rest with per-user keys. Staff cannot read without explicit user consent and audit trail.
+- Relationship data (memories, conversation, emotional state) is encrypted at rest with per-user keys. Staff cannot read without explicit user consent and audit trail.
 - Full export at any time, in an open format.
 - 90-day shutdown notice guarantee, with published export parser source.
 
