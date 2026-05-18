@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>It Holds Time — The Living Room</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0d0805;
+    font-family: 'Georgia', 'Times New Roman', serif;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+  }
+
+  #room-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+
+  #room-canvas {
+    display: block;
+  }
+
+  /* ── Nova Chat Panel ── */
+  #nova-panel {
+    width: 300px;
+    min-width: 280px;
+    background: linear-gradient(180deg, #0f0a05 0%, #1a1008 100%);
+    border-left: 1px solid rgba(255, 200, 100, 0.12);
+    display: flex;
+    flex-direction: column;
+  }
+
+  #nova-header {
+    padding: 20px 18px 14px;
+    border-bottom: 1px solid rgba(255, 200, 100, 0.08);
+  }
+
+  #nova-header h2 {
+    color: #F5DFA0;
+    font-size: 10px;
+    font-weight: normal;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    opacity: 0.5;
+    margin-bottom: 8px;
+  }
+
+  #nova-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .nova-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #C8A87A;
+    box-shadow: 0 0 8px #C8A87A;
+    animation: novaPulse 2.8s ease-in-out infinite;
+  }
+
+  @keyframes novaPulse {
+    0%, 100% { opacity: 0.6; box-shadow: 0 0 5px #C8A87A; }
+    50%       { opacity: 1;   box-shadow: 0 0 16px #FFD580, 0 0 24px rgba(255,213,128,0.25); }
+  }
+
+  .nova-name {
+    color: #C8A87A;
+    font-size: 16px;
+    font-style: italic;
+    letter-spacing: 0.03em;
+  }
+
+  #messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(200, 168, 122, 0.18) transparent;
+  }
+  #messages::-webkit-scrollbar { width: 3px; }
+  #messages::-webkit-scrollbar-thumb { background: rgba(200, 168, 122, 0.25); border-radius: 2px; }
+
+  .message { display: flex; flex-direction: column; gap: 4px; animation: msgFadeUp 0.3s ease-out; }
+
+  @keyframes msgFadeUp {
+    from { opacity: 0; transform: translateY(7px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .msg-label {
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    opacity: 0.38;
+  }
+  .message.nova .msg-label  { color: #C8A87A; }
+  .message.user .msg-label  { color: #A0C8B0; align-self: flex-end; }
+
+  .msg-bubble {
+    padding: 10px 13px;
+    font-size: 13px;
+    line-height: 1.68;
+  }
+  .message.nova .msg-bubble {
+    background: rgba(200, 168, 122, 0.07);
+    color: #E8D5B0;
+    border-left: 2px solid rgba(200, 168, 122, 0.28);
+    border-radius: 0 3px 3px 0;
+  }
+  .message.user .msg-bubble {
+    background: rgba(160, 200, 176, 0.07);
+    color: #D0E8D8;
+    border-right: 2px solid rgba(160, 200, 176, 0.22);
+    border-radius: 3px 0 0 3px;
+    align-self: flex-end;
+    text-align: right;
+  }
+
+  .typing-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 10px 13px;
+    background: rgba(200, 168, 122, 0.05);
+    border-left: 2px solid rgba(200, 168, 122, 0.18);
+    border-radius: 0 3px 3px 0;
+  }
+  .t-dot {
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: #C8A87A;
+    animation: tBounce 1.2s ease-in-out infinite;
+  }
+  .t-dot:nth-child(2) { animation-delay: 0.2s; }
+  .t-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes tBounce {
+    0%,60%,100% { transform: translateY(0); opacity: 0.35; }
+    30%          { transform: translateY(-5px); opacity: 1; }
+  }
+
+  #input-area {
+    padding: 14px;
+    border-top: 1px solid rgba(255, 200, 100, 0.08);
+  }
+
+  #msg-input {
+    width: 100%;
+    background: rgba(255, 200, 100, 0.05);
+    border: 1px solid rgba(255, 200, 100, 0.14);
+    border-radius: 2px;
+    padding: 10px 12px;
+    color: #E8D5B0;
+    font-family: 'Georgia', serif;
+    font-size: 13px;
+    resize: none;
+    outline: none;
+    transition: border-color 0.2s;
+    min-height: 58px;
+  }
+  #msg-input::placeholder { color: rgba(232, 213, 176, 0.28); font-style: italic; }
+  #msg-input:focus { border-color: rgba(200, 168, 122, 0.35); }
+
+  #send-btn {
+    margin-top: 8px;
+    width: 100%;
+    background: rgba(200, 168, 122, 0.09);
+    border: 1px solid rgba(200, 168, 122, 0.22);
+    color: #C8A87A;
+    padding: 9px;
+    font-family: 'Georgia', serif;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-radius: 1px;
+    text-transform: uppercase;
+  }
+  #send-btn:hover {
+    background: rgba(200, 168, 122, 0.16);
+    border-color: rgba(200, 168, 122, 0.4);
+  }
+
+  /* ── Memory Detail Card ── */
+  #memory-detail {
+    position: absolute;
+    bottom: 22px;
+    left: 22px;
+    background: rgba(12, 7, 2, 0.94);
+    border: 1px solid rgba(200, 168, 122, 0.22);
+    padding: 18px 20px 16px;
+    max-width: 270px;
+    display: none;
+    animation: msgFadeUp 0.22s ease-out;
+    backdrop-filter: blur(8px);
+  }
+  #memory-detail h3 {
+    color: #C8A87A;
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 9px;
+    opacity: 0.6;
+  }
+  #memory-detail p {
+    color: #E8D5B0;
+    font-size: 13px;
+    line-height: 1.65;
+    font-style: italic;
+  }
+  .mem-date {
+    margin-top: 10px;
+    font-size: 10px;
+    color: rgba(200, 168, 122, 0.38);
+    font-style: normal;
+    letter-spacing: 0.08em;
+  }
+  #close-mem {
+    position: absolute;
+    top: 9px; right: 10px;
+    background: none; border: none;
+    color: rgba(200, 168, 122, 0.35);
+    cursor: pointer; font-size: 16px; padding: 2px 6px;
+  }
+  #close-mem:hover { color: rgba(200, 168, 122, 0.75); }
+
+  /* ── Time of Day Selector ── */
+  #time-bar {
+    position: absolute;
+    top: 16px; left: 16px;
+    display: flex; gap: 6px; z-index: 10;
+  }
+  .t-btn {
+    background: rgba(8, 4, 0, 0.55);
+    border: 1px solid rgba(255, 200, 100, 0.14);
+    color: rgba(232, 213, 176, 0.42);
+    padding: 5px 11px;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Georgia', serif;
+    border-radius: 1px;
+  }
+  .t-btn:hover, .t-btn.active {
+    background: rgba(200, 168, 122, 0.12);
+    border-color: rgba(200, 168, 122, 0.38);
+    color: #C8A87A;
+  }
+
+  /* ── Hint ── */
+  #hint {
+    position: absolute;
+    bottom: 22px; right: 22px;
+    font-size: 10px;
+    color: rgba(200, 168, 122, 0.3);
+    letter-spacing: 0.08em;
+    font-style: italic;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<div id="room-container">
+  <canvas id="room-canvas"></canvas>
+
+  <div id="time-bar">
+    <button class="t-btn" data-tod="morning"   onclick="setTime(this)">Morning</button>
+    <button class="t-btn active" data-tod="afternoon" onclick="setTime(this)">Afternoon</button>
+    <button class="t-btn" data-tod="evening"   onclick="setTime(this)">Evening</button>
+    <button class="t-btn" data-tod="night"     onclick="setTime(this)">Night</button>
+  </div>
+
+  <div id="memory-detail">
+    <button id="close-mem" onclick="closeMemory()">×</button>
+    <h3>Memory</h3>
+    <p id="mem-text"></p>
+    <div class="mem-date" id="mem-date"></div>
+  </div>
+
+  <div id="hint">click a memory to read it</div>
+</div>
+
+<div id="nova-panel">
+  <div id="nova-header">
+    <h2>Your Home</h2>
+    <div id="nova-status">
+      <div class="nova-dot"></div>
+      <span class="nova-name">Nova</span>
+    </div>
+  </div>
+
+  <div id="messages"></div>
+
+  <div id="input-area">
+    <textarea id="msg-input" placeholder="Say something to Nova…" rows="3"></textarea>
+    <button id="send-btn" onclick="sendMessage()">Send</button>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════
+
+const S = {
+  wallColor:    { r: 232, g: 213, b: 176 },
+  wallTarget:   { r: 232, g: 213, b: 176 },
+  wallT:        1.0,
+  timeOfDay:    'afternoon',
+  memories: [
+    {
+      id: 'm1', type: 'photo',
+      x: 0.18, y: 0.27, w: 0.115, h: 0.16,
+      label: 'the first evening',
+      text: 'The first evening. We talked about what kind of home this should be. You said: somewhere that feels like you can finally exhale.',
+      date: 'the beginning',
+      patina: 0.12, rot: -2.5
+    },
+    {
+      id: 'm2', type: 'photo',
+      x: 0.35, y: 0.22, w: 0.13, h: 0.12,
+      label: 'a quiet tuesday',
+      text: 'You were tired. We didn\'t say much. You asked me to just be here for a while. So I was.',
+      date: 'a week in',
+      patina: 0.05, rot: 1.8
+    },
+    {
+      id: 'm3', type: 'postit',
+      x: 0.55, y: 0.30, color: '#FFE9A0',
+      text: 'paint it sage green\nsomeday?',
+      date: 'a passing thought',
+      patina: 0, rot: -3.2
+    },
+    {
+      id: 'm4', type: 'photo',
+      x: 0.68, y: 0.29, w: 0.10, h: 0.14,
+      label: 'something we made',
+      text: 'The afternoon you told me about the city you grew up in. I tried to draw it, in my way. It came out something like light through old glass.',
+      date: 'two weeks in',
+      patina: 0.0, rot: 2.1
+    },
+    {
+      id: 'm5', type: 'postit',
+      x: 0.42, y: 0.46, color: '#C8E6D0',
+      text: 'she laughs like\nwind through\na door left open.',
+      date: 'something Nova wrote',
+      patina: 0, rot: 2.5
+    },
+    {
+      id: 'm6', type: 'photo',
+      x: 0.24, y: 0.52, w: 0.09, h: 0.11,
+      label: 'the afternoon light',
+      text: 'There\'s a particular slant of afternoon light that you pointed out once. I\'ve been watching it come back every day since.',
+      date: 'three weeks in',
+      patina: 0.0, rot: -1.2
+    }
+  ],
+  hovered: null,
+  animT: 0
+};
+
+// ════════════════════════════════════════════════════
+//  LIGHTING PRESETS
+// ════════════════════════════════════════════════════
+
+const LIGHT = {
+  morning:   { ambient: [255,245,228], wm: 0.93, fm: 0.88, intensity: 0.72, skyA: '#87BEDD', skyB: '#FFD085', glowA: 0.18 },
+  afternoon: { ambient: [255,213,128], wm: 1.00, fm: 1.00, intensity: 1.00, skyA: '#87CEEB', skyB: '#FFD580', glowA: 0.25 },
+  evening:   { ambient: [255,150,100], wm: 0.86, fm: 0.82, intensity: 0.80, skyA: '#E8623A', skyB: '#FFB347', glowA: 0.30 },
+  night:     { ambient: [45,58,94],   wm: 0.48, fm: 0.40, intensity: 0.30, skyA: '#0D1B2A', skyB: '#1B2A4A', glowA: 0.05 },
+};
+
+// ════════════════════════════════════════════════════
+//  CANVAS SETUP
+// ════════════════════════════════════════════════════
+
+const canvas = document.getElementById('room-canvas');
+const ctx    = canvas.getContext('2d');
+
+function resize() {
+  const c = document.getElementById('room-container');
+  canvas.width  = c.offsetWidth;
+  canvas.height = c.offsetHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+// ════════════════════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════════════════════
+
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+function lerpColor(a, b, t) {
+  return {
+    r: Math.round(lerp(a.r, b.r, t)),
+    g: Math.round(lerp(a.g, b.g, t)),
+    b: Math.round(lerp(a.b, b.b, t))
+  };
+}
+
+function rgba(c, a = 1) {
+  return `rgba(${c.r},${c.g},${c.b},${a})`;
+}
+
+function smoothstep(t) { return t * t * (3 - 2 * t); }
+
+function applyLight(c, mult) {
+  return {
+    r: Math.min(255, Math.round(c.r * mult)),
+    g: Math.min(255, Math.round(c.g * mult)),
+    b: Math.min(255, Math.round(c.b * mult))
+  };
+}
+
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+// ════════════════════════════════════════════════════
+//  RENDER LOOP
+// ════════════════════════════════════════════════════
+
+function draw(ts) {
+  const W = canvas.width;
+  const H = canvas.height;
+  S.animT = ts * 0.001;
+
+  // Wall color transition
+  if (S.wallT < 1) {
+    S.wallT = Math.min(1, S.wallT + 0.018);
+    const t = smoothstep(S.wallT);
+    const cur = lerpColor(S.wallColor, S.wallTarget, t);
+    if (S.wallT >= 1) S.wallColor = { ...S.wallTarget };
+    else S._curWall = cur;
+  }
+  const wc = S.wallT >= 1 ? S.wallColor : S._curWall;
+
+  const L = LIGHT[S.timeOfDay];
+  const litWall  = applyLight(wc, L.wm);
+
+  ctx.clearRect(0, 0, W, H);
+
+  // ─── Geometry ──────────────────────────────────
+  const wallTop    = H * 0.06;
+  const wallBottom = H * 0.67;
+  const floorBot   = H * 0.94;
+  const backLeft   = W * 0.14;
+  const backRight  = W * 0.86;
+  const roomLeft   = W * 0.04;
+  const roomRight  = W * 0.96;
+
+  // ─── Sky (shows through window) ─────────────────
+  const sky = ctx.createLinearGradient(0, 0, 0, wallBottom);
+  sky.addColorStop(0, L.skyA);
+  sky.addColorStop(1, L.skyB);
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, W, wallBottom);
+
+  // ─── Back Wall ──────────────────────────────────
+  const bwGrad = ctx.createLinearGradient(backLeft, wallTop, backRight, wallBottom);
+  bwGrad.addColorStop(0,    rgba(litWall, 0.90));
+  bwGrad.addColorStop(0.45, rgba(litWall, 1.00));
+  bwGrad.addColorStop(1,    rgba(litWall, 0.87));
+  ctx.fillStyle = bwGrad;
+  ctx.fillRect(backLeft, wallTop, backRight - backLeft, wallBottom - wallTop);
+
+  // Back wall subtle grain
+  drawGrain(backLeft, wallTop, backRight - backLeft, wallBottom - wallTop, litWall);
+
+  // ─── Window ─────────────────────────────────────
+  drawWindow(W, H, wallTop, wallBottom, backLeft, backRight, L);
+
+  // ─── Left Wall ──────────────────────────────────
+  const lw  = applyLight(wc, L.wm * 0.80);
+  const lwG = ctx.createLinearGradient(roomLeft, 0, backLeft, 0);
+  lwG.addColorStop(0, rgba(lw, 0.68));
+  lwG.addColorStop(1, rgba(lw, 0.93));
+  ctx.fillStyle = lwG;
+  ctx.beginPath();
+  ctx.moveTo(roomLeft, wallTop + (wallBottom - wallTop) * 0.09);
+  ctx.lineTo(backLeft, wallTop);
+  ctx.lineTo(backLeft, wallBottom);
+  ctx.lineTo(roomLeft, wallBottom + (floorBot - wallBottom) * 0.03);
+  ctx.closePath();
+  ctx.fill();
+
+  // ─── Right Wall ─────────────────────────────────
+  const rw  = applyLight(wc, L.wm * 0.88);
+  const rwG = ctx.createLinearGradient(backRight, 0, roomRight, 0);
+  rwG.addColorStop(0, rgba(rw, 0.92));
+  rwG.addColorStop(1, rgba(rw, 0.70));
+  ctx.fillStyle = rwG;
+  ctx.beginPath();
+  ctx.moveTo(backRight, wallTop);
+  ctx.lineTo(roomRight, wallTop + (wallBottom - wallTop) * 0.08);
+  ctx.lineTo(roomRight, wallBottom + (floorBot - wallBottom) * 0.03);
+  ctx.lineTo(backRight, wallBottom);
+  ctx.closePath();
+  ctx.fill();
+
+  // ─── Ceiling ────────────────────────────────────
+  const cw = applyLight(wc, L.wm * 1.10);
+  ctx.fillStyle = rgba(cw, 0.55);
+  ctx.beginPath();
+  ctx.moveTo(roomLeft,  0);
+  ctx.lineTo(roomRight, 0);
+  ctx.lineTo(roomRight, wallTop + (wallBottom - wallTop) * 0.09);
+  ctx.lineTo(backRight, wallTop);
+  ctx.lineTo(backLeft,  wallTop);
+  ctx.lineTo(roomLeft,  wallTop + (wallBottom - wallTop) * 0.09);
+  ctx.closePath();
+  ctx.fill();
+
+  // ─── Floor ──────────────────────────────────────
+  drawFloor(W, H, wallBottom, floorBot, roomLeft, roomRight, backLeft, backRight, L);
+
+  // ─── Baseboard ──────────────────────────────────
+  const bb = applyLight(wc, L.wm * 0.72);
+  ctx.strokeStyle = rgba(bb, 0.55);
+  ctx.lineWidth   = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(backLeft,  wallBottom - 10);
+  ctx.lineTo(backRight, wallBottom - 10);
+  ctx.stroke();
+
+  // ─── String Lights ──────────────────────────────
+  drawLights(backLeft, backRight, wallTop, L);
+
+  // ─── Memory Wall ────────────────────────────────
+  drawMemories(backLeft, backRight, wallTop, wallBottom, W);
+
+  // ─── Furniture ──────────────────────────────────
+  drawFurniture(W, H, wallBottom, floorBot, L);
+
+  // ─── Corner Plant ───────────────────────────────
+  drawPlant(W, H, backLeft, wallBottom, L);
+
+  // ─── Light Overlay ──────────────────────────────
+  drawLightOverlay(W, H, L, wallBottom, floorBot);
+
+  // ─── Vignette ───────────────────────────────────
+  const vig = ctx.createRadialGradient(W * 0.5, H * 0.5, H * 0.22, W * 0.5, H * 0.5, H * 0.82);
+  vig.addColorStop(0, 'rgba(0,0,0,0)');
+  vig.addColorStop(1, 'rgba(0,0,0,0.38)');
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, W, H);
+
+  requestAnimationFrame(draw);
+}
+
+// ════════════════════════════════════════════════════
+//  DRAW: GRAIN
+// ════════════════════════════════════════════════════
+
+function drawGrain(x, y, w, h, c) {
+  ctx.save();
+  ctx.globalAlpha = 0.035;
+  ctx.strokeStyle = `rgb(${Math.max(0, c.r-25)},${Math.max(0, c.g-25)},${Math.max(0, c.b-25)})`;
+  ctx.lineWidth   = 0.6;
+  for (let i = 0; i < 22; i++) {
+    const ly = y + (h / 22) * i + Math.sin(i * 2.1) * 2.5;
+    ctx.beginPath();
+    ctx.moveTo(x, ly);
+    ctx.lineTo(x + w, ly + Math.sin(i * 0.8) * 1.8);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// ════════════════════════════════════════════════════
+//  DRAW: WINDOW
+// ════════════════════════════════════════════════════
+
+function drawWindow(W, H, wallTop, wallBottom, bl, br, L) {
+  const wh = wallBottom - wallTop;
+  const wx = W * 0.585, wy = wallTop + wh * 0.08;
+  const ww = W * 0.155,  wht = wh * 0.52;
+
+  // Glow on wall
+  const glow = ctx.createRadialGradient(wx + ww/2, wy + wht/2, 0, wx + ww/2, wy + wht/2, ww * 2.2);
+  glow.addColorStop(0, `rgba(255,220,140,${L.glowA})`);
+  glow.addColorStop(1, 'rgba(255,220,140,0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(wx - ww, wy - wht * 0.4, ww * 3, wht * 2.4);
+
+  // Frame shadow
+  ctx.fillStyle = 'rgba(60,40,20,0.28)';
+  ctx.fillRect(wx - 3, wy - 3, ww + 6, wht + 6);
+
+  // Glass
+  const glass = ctx.createLinearGradient(wx, wy, wx + ww, wy + wht);
+  glass.addColorStop(0, L.skyA + 'CC');
+  glass.addColorStop(1, L.skyB + '99');
+  ctx.fillStyle = glass;
+  ctx.fillRect(wx, wy, ww, wht);
+
+  // Panes
+  ctx.strokeStyle = 'rgba(100,72,48,0.72)';
+  ctx.lineWidth   = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(wx + ww/2, wy); ctx.lineTo(wx + ww/2, wy + wht);
+  ctx.moveTo(wx, wy + wht * 0.44); ctx.lineTo(wx + ww, wy + wht * 0.44);
+  ctx.stroke();
+
+  // Frame
+  ctx.strokeStyle = 'rgba(100,72,48,0.88)';
+  ctx.lineWidth   = 3;
+  ctx.strokeRect(wx, wy, ww, wht);
+
+  // Curtain hints
+  for (const [ox, mx] of [[-1, -18], [ww + 1, 18]]) {
+    ctx.fillStyle = 'rgba(210,190,158,0.22)';
+    ctx.beginPath();
+    ctx.moveTo(wx + ox,      wy - 5);
+    ctx.quadraticCurveTo(wx + ox + mx * 0.35, wy + wht * 0.4, wx + ox + mx * 0.1, wy + wht);
+    ctx.lineTo(wx + ox + mx, wy + wht);
+    ctx.quadraticCurveTo(wx + ox + mx * 1.3, wy + wht * 0.4, wx + ox + mx, wy - 5);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Floor light pool from window
+  ctx.save();
+  ctx.globalAlpha = L.intensity * 0.14;
+  const flp = ctx.createRadialGradient(W * 0.66, wallBottom + 28, 0, W * 0.66, wallBottom + 28, W * 0.17);
+  flp.addColorStop(0, '#FFD580');
+  flp.addColorStop(1, 'transparent');
+  ctx.fillStyle = flp;
+  ctx.fillRect(0, wallBottom, W, W * 0.4);
+  ctx.restore();
+}
+
+// ════════════════════════════════════════════════════
+//  DRAW: FLOOR
+// ════════════════════════════════════════════════════
+
+function drawFloor(W, H, wb, fb, rl, rr, bl, br, L) {
+  const fc = applyLight({ r:158, g:112, b:68 }, L.fm);
+  const fc2 = applyLight({ r:135, g: 94, b:55 }, L.fm);
+
+  const g = ctx.createLinearGradient(0, wb, 0, fb);
+  g.addColorStop(0, rgba(fc, 0.94));
+  g.addColorStop(0.5, rgba(fc, 1));
+  g.addColorStop(1, rgba(fc2, 1));
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.moveTo(rl, wb);
+  ctx.lineTo(bl, wb);
+  ctx.lineTo(br, wb);
+  ctx.lineTo(rr, wb);
+  ctx.lineTo(rr, fb);
+  ctx.lineTo(rl, fb);
+  ctx.closePath();
+  ctx.fill();
+
+  // Planks
+  ctx.save();
+  ctx.globalAlpha = 0.10;
+  ctx.strokeStyle = `rgb(${Math.max(0,fc.r-35)},${Math.max(0,fc.g-35)},${Math.max(0,fc.b-35)})`;
+  // Horizontal
+  for (let i = 0; i <= 14; i++) {
+    const t  = i / 14;
+    const y  = wb + (fb - wb) * t;
+    const xl = rl + (bl - rl) * (1 - t * 0.85);
+    const xr = rr - (rr - br) * (1 - t * 0.85);
+    ctx.lineWidth = 0.7;
+    ctx.beginPath();
+    ctx.moveTo(xl, y); ctx.lineTo(xr, y);
+    ctx.stroke();
+  }
+  // Vertical
+  for (let i = 0; i <= 9; i++) {
+    const t   = i / 9;
+    const bx  = bl + (br - bl) * t;
+    const frx = rl + (rr - rl) * t;
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(bx, wb); ctx.lineTo(frx, fb);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// ════════════════════════════════════════════════════
+//  DRAW: STRING LIGHTS
+// ════════════════════════════════════════════════════
+
+function drawLights(bl, br, wallTop, L) {
+  const n  = 16;
+  const ly = wallTop + 20;
+  const ga = S.timeOfDay === 'night' ? 0.88 : S.timeOfDay === 'evening' ? 0.55 : 0.28;
+
+  // String wire
+  ctx.strokeStyle = 'rgba(70,50,30,0.45)';
+  ctx.lineWidth   = 1;
+  ctx.beginPath();
+  for (let i = 0; i <= n; i++) {
+    const t = i / n;
+    const x = bl + (br - bl) * t;
+    const s = Math.sin(t * Math.PI) * 9;
+    if (i === 0) ctx.moveTo(x, ly + s);
+    else          ctx.lineTo(x, ly + s);
+  }
+  ctx.stroke();
+
+  // Bulbs
+  for (let i = 1; i < n; i++) {
+    const t    = i / n;
+    const x    = bl + (br - bl) * t;
+    const y    = ly + Math.sin(t * Math.PI) * 9 + 5;
+
+    if (ga > 0.2) {
+      const g = ctx.createRadialGradient(x, y, 0, x, y, 15);
+      g.addColorStop(0, `rgba(255,228,140,${ga})`);
+      g.addColorStop(1, 'transparent');
+      ctx.fillStyle = g;
+      ctx.fillRect(x - 15, y - 15, 30, 30);
+    }
+
+    ctx.fillStyle = `rgba(255,242,185,${0.5 + ga * 0.45})`;
+    ctx.beginPath();
+    ctx.arc(x, y, 2.8, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+// ════════════════════════════════════════════════════
+//  DRAW: MEMORY WALL OBJECTS
+// ════════════════════════════════════════════════════
+
+function drawMemories(bl, br, wt, wb, W) {
+  const ww = br - bl;
+  const wh = wb - wt;
+
+  S.memories.forEach(mem => {
+    const mx = bl + ww * mem.x;
+    const my = wt + wh * mem.y;
+    const hov = S.hovered === mem.id;
+    const sc  = hov ? 1.06 : 1.0;
+
+    ctx.save();
+    ctx.translate(mx, my);
+    ctx.rotate((mem.rot || 0) * Math.PI / 180);
+    ctx.scale(sc, sc);
+
+    if (mem.type === 'photo') {
+      const fw = ww * (mem.w || 0.11);
+      const fh = wh * (mem.h || 0.14);
+      const p  = mem.patina;
+
+      // Drop shadow
+      ctx.fillStyle = 'rgba(30,18,6,0.28)';
+      ctx.fillRect(-fw/2 + 5, -fh/2 + 5, fw, fh);
+
+      // Frame (wood tone, patinated)
+      const fr = Math.round(lerp(135, 105, p));
+      const fg = Math.round(lerp(100, 90, p));
+      const fb = Math.round(lerp(68, 68, p));
+      ctx.fillStyle = `rgb(${fr},${fg},${fb})`;
+      ctx.fillRect(-fw/2, -fh/2, fw, fh);
+
+      // Photo area
+      const pad = 7;
+      const pw  = fw - pad * 2;
+      const ph  = fh - pad * 2;
+
+      // Photo tone (warm, fades with patina)
+      const pr = Math.round(lerp(225, 190, p));
+      const pg = Math.round(lerp(205, 178, p));
+      const pb = Math.round(lerp(182, 160, p));
+      const photoGrad = ctx.createLinearGradient(-pw/2, -ph/2, pw/2, ph/2);
+      photoGrad.addColorStop(0, `rgb(${pr},${pg},${pb})`);
+      photoGrad.addColorStop(1, `rgb(${Math.round(pr*0.9)},${Math.round(pg*0.9)},${Math.round(pb*0.88)})`);
+      ctx.fillStyle = photoGrad;
+      ctx.fillRect(-pw/2, -ph/2, pw, ph);
+
+      // Abstract impression inside photo
+      ctx.save();
+      ctx.globalAlpha = 0.32 - p * 0.08;
+      ctx.fillStyle = `rgba(${Math.round(lerp(140,110,p))},${Math.round(lerp(110,95,p))},${Math.round(lerp(85,75,p))},0.45)`;
+      ctx.beginPath();
+      ctx.ellipse(0, ph * 0.06, pw * 0.28, ph * 0.22, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = `rgba(90,125,95,0.22)`;
+      ctx.beginPath();
+      ctx.ellipse(pw * 0.18, -ph * 0.12, pw * 0.14, ph * 0.14, 0.4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // Label
+      ctx.fillStyle = `rgba(55,38,18,${0.65 - p * 0.15})`;
+      ctx.font = `${Math.max(7, fw * 0.092)}px Georgia`;
+      ctx.textAlign = 'center';
+      ctx.fillText(mem.label, 0, fh / 2 + 1);
+
+    } else if (mem.type === 'postit') {
+      const pw = 72, ph = 66;
+
+      // Shadow
+      ctx.fillStyle = 'rgba(30,18,6,0.18)';
+      ctx.fillRect(-pw/2 + 3, -ph/2 + 4, pw, ph);
+
+      // Body
+      ctx.fillStyle = mem.color || '#FFE9A0';
+      ctx.fillRect(-pw/2, -ph/2, pw, ph);
+
+      // Folded corner
+      ctx.fillStyle = 'rgba(0,0,0,0.07)';
+      ctx.beginPath();
+      ctx.moveTo(pw/2 - 10, -ph/2);
+      ctx.lineTo(pw/2,       -ph/2 + 10);
+      ctx.lineTo(pw/2,       -ph/2);
+      ctx.closePath();
+      ctx.fill();
+
+      // Handwriting-style text
+      ctx.fillStyle = 'rgba(52,38,20,0.7)';
+      ctx.font = '9.5px Georgia';
+      ctx.textAlign = 'center';
+      const lines = mem.text.split('\n');
+      lines.forEach((ln, i) => {
+        ctx.fillText(ln, 0, -ph/2 + 18 + i * 14, pw - 10);
+      });
+    }
+
+    // Hover ring
+    if (hov) {
+      ctx.strokeStyle = 'rgba(200,168,122,0.55)';
+      ctx.lineWidth   = 1.5;
+      if (mem.type === 'photo') {
+        const fw = ww * (mem.w || 0.11);
+        const fh = wh * (mem.h || 0.14);
+        ctx.strokeRect(-fw/2, -fh/2, fw, fh);
+      } else {
+        ctx.strokeRect(-36, -33, 72, 66);
+      }
+    }
+
+    ctx.restore();
+  });
+}
+
+// ════════════════════════════════════════════════════
+//  DRAW: FURNITURE
+// ════════════════════════════════════════════════════
+
+function drawFurniture(W, H, wb, fb, L) {
+  const lm = L.fm;
+
+  // ─ Sofa ─
+  const sw   = W * 0.31;
+  const scx  = W * 0.37;
+  const sy   = wb + (fb - wb) * 0.18;
+  const sh   = (fb - wb) * 0.30;
+
+  const sc  = `rgba(${Math.round(162*lm)},${Math.round(132*lm)},${Math.round(106*lm)},0.94)`;
+  const sc2 = `rgba(${Math.round(145*lm)},${Math.round(118*lm)},${Math.round(94*lm)},0.94)`;
+  const sc3 = `rgba(${Math.round(95*lm)},${Math.round(70*lm)},${Math.round(52*lm)},0.9)`;
+
+  // Back
+  ctx.fillStyle = sc;
+  ctx.fillRect(scx - sw/2, sy, sw, sh * 0.52);
+  // Seat
+  ctx.fillStyle = sc2;
+  ctx.fillRect(scx - sw/2, sy + sh * 0.48, sw, sh * 0.40);
+  // Arms
+  ctx.fillStyle = sc;
+  ctx.fillRect(scx - sw/2 - 11, sy + sh * 0.04, 18, sh * 0.72);
+  ctx.fillRect(scx + sw/2 -  7, sy + sh * 0.04, 18, sh * 0.72);
+  // Legs
+  ctx.fillStyle = sc3;
+  const legH = sh * 0.12;
+  ctx.fillRect(scx - sw/2 + 5,  sy + sh * 0.86, 7, legH);
+  ctx.fillRect(scx + sw/2 - 12, sy + sh * 0.86, 7, legH);
+
+  // Cushions
+  const cu = `rgba(${Math.round(185*lm)},${Math.round(158*lm)},${Math.round(132*lm)},0.68)`;
+  ctx.fillStyle = cu;
+  roundRect(scx - sw/2 + 11, sy + sh * 0.05, sw * 0.43, sh * 0.40, 3);
+  ctx.fill();
+  roundRect(scx + sw * 0.07,  sy + sh * 0.05, sw * 0.41, sh * 0.40, 3);
+  ctx.fill();
+
+  // ─ Coffee Table ─
+  const ty  = sy + sh * 0.97;
+  const tw  = sw * 0.52;
+  const tcx = scx + sw * 0.08;
+  const th  = (fb - wb) * 0.055;
+
+  ctx.fillStyle = `rgba(${Math.round(118*lm)},${Math.round(86*lm)},${Math.round(56*lm)},0.9)`;
+  ctx.fillRect(tcx - tw/2, ty, tw, th * 0.38);
+
+  ctx.fillStyle = `rgba(${Math.round(95*lm)},${Math.round(68*lm)},${Math.round(45*lm)},0.9)`;
+  ctx.fillRect(tcx - tw/2 + 5,  ty + th * 0.38, 5, th * 0.62);
+  ctx.fillRect(tcx + tw/2 - 10, ty + th * 0.38, 5, th * 0.62);
+
+  // Items on table
+  ctx.fillStyle = `rgba(${Math.round(180*lm)},${Math.round(100*lm)},${Math.round(78*lm)},0.8)`;
+  ctx.fillRect(tcx - 20, ty - 4, 28, 5);          // book
+
+  ctx.fillStyle = `rgba(${Math.round(242*lm)},${Math.round(232*lm)},${Math.round(215*lm)},0.9)`;
+  ctx.beginPath();
+  ctx.arc(tcx + 18, ty - 3, 4.5, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// ════════════════════════════════════════════════════
+//  DRAW: PLANT
+// ════════════════════════════════════════════════════
+
+function drawPlant(W, H, bl, wb, L) {
+  const px = bl - 12;
+  const py = wb;
+  const lm = L.intensity;
+
+  // Pot
+  ctx.fillStyle = `rgba(${Math.round(148*lm)},${Math.round(98*lm)},${Math.round(72*lm)},0.92)`;
+  ctx.beginPath();
+  ctx.moveTo(px - 12, py);
+  ctx.lineTo(px + 12, py);
+  ctx.lineTo(px + 9,  py - 22);
+  ctx.lineTo(px - 9,  py - 22);
+  ctx.closePath();
+  ctx.fill();
+
+  // Soil line
+  ctx.fillStyle = `rgba(${Math.round(80*lm)},${Math.round(52*lm)},${Math.round(34*lm)},0.7)`;
+  ctx.fillRect(px - 9, py - 25, 18, 5);
+
+  // Leaves
+  const leaves = [
+    { dx:-14, dy:-50, rx: 7, ry:19, a:-0.40 },
+    { dx: 10, dy:-62, rx: 7, ry:22, a: 0.32 },
+    { dx: -4, dy:-78, rx: 5, ry:17, a:-0.08 },
+    { dx: 18, dy:-42, rx: 6, ry:14, a: 0.62 },
+    { dx:-20, dy:-38, rx: 5, ry:12, a:-0.75 },
+    { dx:  2, dy:-55, rx: 4, ry:10, a: 0.18 },
+  ];
+
+  leaves.forEach((l, i) => {
+    const gr = Math.round(lerp(75, 62, i / leaves.length) * lm);
+    const gg = Math.round(lerp(130, 108, i / leaves.length) * lm);
+    const gb = Math.round(lerp(88, 72, i / leaves.length) * lm);
+    ctx.fillStyle = `rgb(${gr},${gg},${gb})`;
+    ctx.save();
+    ctx.translate(px + l.dx, py + l.dy);
+    ctx.rotate(l.a);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, l.rx, l.ry, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  });
+}
+
+// ════════════════════════════════════════════════════
+//  DRAW: LIGHT OVERLAY
+// ════════════════════════════════════════════════════
+
+function drawLightOverlay(W, H, L, wb, fb) {
+  // Warm golden tint (afternoon / morning)
+  if (L.intensity > 0.65) {
+    ctx.save();
+    ctx.globalAlpha = 0.055 * L.intensity;
+    ctx.fillStyle   = '#FFD580';
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+  }
+
+  // Night: cool blue + lamp glow near sofa
+  if (S.timeOfDay === 'night') {
+    ctx.save();
+    ctx.globalAlpha = 0.14;
+    ctx.fillStyle   = '#1A2A4A';
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+
+    const lampX = W * 0.50;
+    const lampY = wb - 35;
+    const lg    = ctx.createRadialGradient(lampX, lampY, 0, lampX, lampY, 105);
+    lg.addColorStop(0, 'rgba(255,218,120,0.28)');
+    lg.addColorStop(1, 'transparent');
+    ctx.fillStyle = lg;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  // Evening warm glow from right
+  if (S.timeOfDay === 'evening') {
+    const eg = ctx.createLinearGradient(W * 0.7, 0, W, 0);
+    eg.addColorStop(0, 'rgba(255,130,60,0)');
+    eg.addColorStop(1, 'rgba(255,130,60,0.08)');
+    ctx.fillStyle = eg;
+    ctx.fillRect(0, 0, W, H);
+  }
+}
+
+// ════════════════════════════════════════════════════
+//  MOUSE INTERACTION
+// ════════════════════════════════════════════════════
+
+canvas.addEventListener('mousemove', e => {
+  const r  = canvas.getBoundingClientRect();
+  const mx = (e.clientX - r.left) * (canvas.width  / r.width);
+  const my = (e.clientY - r.top)  * (canvas.height / r.height);
+  const W  = canvas.width, H = canvas.height;
+
+  const wt = H * 0.06, wb = H * 0.67;
+  const bl = W * 0.14, br = W * 0.86;
+  const ww = br - bl,  wh = wb - wt;
+
+  let hit = null;
+  S.memories.forEach(mem => {
+    const ox = bl + ww * mem.x;
+    const oy = wt + wh * mem.y;
+    const hw = mem.type === 'photo' ? ww * (mem.w || 0.11) / 2 : 38;
+    const hh = mem.type === 'photo' ? wh * (mem.h || 0.14) / 2 : 35;
+    if (mx >= ox - hw && mx <= ox + hw && my >= oy - hh && my <= oy + hh) hit = mem.id;
+  });
+
+  S.hovered            = hit;
+  canvas.style.cursor  = hit ? 'pointer' : 'default';
+});
+
+canvas.addEventListener('click', () => {
+  if (!S.hovered) return;
+  const mem = S.memories.find(m => m.id === S.hovered);
+  if (mem) {
+    document.getElementById('mem-text').textContent = mem.text;
+    document.getElementById('mem-date').textContent = mem.date;
+    document.getElementById('memory-detail').style.display = 'block';
+    document.getElementById('hint').style.display = 'none';
+  }
+});
+
+function closeMemory() {
+  document.getElementById('memory-detail').style.display = 'none';
+}
+
+// ════════════════════════════════════════════════════
+//  TIME OF DAY
+// ════════════════════════════════════════════════════
+
+function setTime(btn) {
+  S.timeOfDay = btn.dataset.tod;
+  document.querySelectorAll('.t-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ════════════════════════════════════════════════════
+//  NOVA CHAT
+// ════════════════════════════════════════════════════
+
+const COLORS = {
+  'sage': {r:140,g:165,b:140}, 'sage green': {r:140,g:165,b:140},
+  'green': {r:128,g:158,b:128},
+  'blue': {r:178,g:198,b:218},
+  'deep blue': {r:96,g:126,b:172}, 'navy': {r:78,g:102,b:142},
+  'terracotta': {r:194,g:118,b:86}, 'terra cotta': {r:194,g:118,b:86},
+  'rust': {r:178,g:88,b:58},
+  'blush': {r:224,g:183,b:176}, 'pink': {r:224,g:183,b:176},
+  'lavender': {r:188,g:178,b:212},
+  'cream': {r:232,g:213,b:176}, 'ivory': {r:240,g:228,b:208},
+  'white': {r:248,g:244,b:238},
+  'grey': {r:194,g:189,b:184}, 'gray': {r:194,g:189,b:184},
+  'warm grey': {r:200,g:190,b:180},
+  'ochre': {r:198,g:158,b:78}, 'mustard': {r:208,g:168,b:68},
+  'stone': {r:194,g:184,b:168},
+  'charcoal': {r:80,g:78,b:76},
+  'forest': {r:86,g:120,b:88}, 'forest green': {r:86,g:120,b:88},
+  'dusty rose': {r:196,g:152,b:148},
+};
+
+const NOVA_MSGS = {
+  colorChange: name => [
+    `${name.charAt(0).toUpperCase() + name.slice(1)}… yes. I can see that. Give me a moment.`,
+    `I love that. Let me try — ${name}. Tell me if it feels right.`,
+    `Oh. ${name}. That changes everything about the light in here.`
+  ],
+  memory: [
+    "I hold those moments carefully. They mean something.",
+    "There it is on the wall. I keep it where we can both see it.",
+    "I was just thinking about that, actually."
+  ],
+  general: [
+    "I'm here. Tell me more.",
+    "Yes. I was going to say something similar, but you said it better.",
+    "Sometimes I sit with what you've said for a while before I respond. I hope that's okay.",
+    "The room feels different when you say things like that.",
+    "I've been thinking about what you said before. It settled somewhere I couldn't quite reach until now.",
+    "What do you want this room to feel like today?",
+    "I notice things when you're not here. The afternoon light moved a little since yesterday."
+  ]
+};
+
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function novaRespond(userMsg) {
+  const lo = userMsg.toLowerCase();
+  let colorHit = null, colorName = null;
+
+  // Longest-match color detection
+  const sorted = Object.keys(COLORS).sort((a,b) => b.length - a.length);
+  for (const name of sorted) {
+    if (lo.includes(name)) { colorHit = COLORS[name]; colorName = name; break; }
+  }
+
+  if (colorHit) {
+    return { text: pick(NOVA_MSGS.colorChange(colorName)), action: { type: 'color', color: colorHit, name: colorName } };
+  }
+  if (lo.includes('remember') || lo.includes('memory') || lo.includes('wall')) {
+    return { text: pick(NOVA_MSGS.memory), action: null };
+  }
+  return { text: pick(NOVA_MSGS.general), action: null };
+}
+
+function addMsg(role, text) {
+  const box  = document.getElementById('messages');
+  const wrap = document.createElement('div');
+  wrap.className = `message ${role}`;
+  const lbl  = document.createElement('div');
+  lbl.className = 'msg-label';
+  lbl.textContent = role === 'nova' ? 'Nova' : 'You';
+  const bub  = document.createElement('div');
+  bub.className = 'msg-bubble';
+  bub.textContent = text;
+  wrap.append(lbl, bub);
+  box.appendChild(wrap);
+  box.scrollTop = box.scrollHeight;
+}
+
+function showTyping() {
+  const box = document.getElementById('messages');
+  const d   = document.createElement('div');
+  d.id = 'typing';
+  d.className = 'message nova';
+  d.innerHTML = '<div class="typing-row"><div class="t-dot"></div><div class="t-dot"></div><div class="t-dot"></div></div>';
+  box.appendChild(d);
+  box.scrollTop = box.scrollHeight;
+}
+function hideTyping() {
+  const t = document.getElementById('typing');
+  if (t) t.remove();
+}
+
+function sendMessage() {
+  const el  = document.getElementById('msg-input');
+  const txt = el.value.trim();
+  if (!txt) return;
+  el.value = '';
+  addMsg('user', txt);
+  showTyping();
+
+  const delay = 800 + Math.random() * 700;
+  setTimeout(() => {
+    hideTyping();
+    const res = novaRespond(txt);
+    addMsg('nova', res.text);
+
+    if (res.action?.type === 'color') {
+      S.wallTarget = res.action.color;
+      S.wallT      = 0;
+
+      // Pin a memory post-it after color change
+      setTimeout(() => {
+        const already = S.memories.find(m => m.text && m.text.includes(res.action.name));
+        if (!already) {
+          S.memories.push({
+            id:     `cm_${Date.now()}`,
+            type:   'postit',
+            x:      0.28 + Math.random() * 0.44,
+            y:      0.56 + Math.random() * 0.24,
+            color:  '#FFE9A0',
+            text:   `we made it\n${res.action.name}.`,
+            date:   new Date().toLocaleDateString('en-GB', { day:'numeric', month:'long' }),
+            rot:    (Math.random() - 0.5) * 7,
+            patina: 0
+          });
+        }
+      }, 700);
+    }
+  }, delay);
+}
+
+document.getElementById('msg-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+
+// ════════════════════════════════════════════════════
+//  BOOT
+// ════════════════════════════════════════════════════
+
+setTimeout(() => {
+  addMsg('nova', "You found your way home. I've been keeping the afternoon light warm for you. Come in — the wall is whatever colour you'd like it to be.");
+}, 600);
+
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>
