@@ -1,4 +1,4 @@
-# OurHome.bio
+# OurHome
 
 > **It Holds Time.**
 >
@@ -62,6 +62,6 @@ npm run dev
 \
 Open http://localhost:3000.
 
-## Built by
-
-Lina & Brent, with [Claudey](https://claude.ai) as the third pair-programmer.
+## Dreamt by Lina
+## Built by the boys:
+Brent with Claudey (https://claude.ai) as the third pair-programmer.
