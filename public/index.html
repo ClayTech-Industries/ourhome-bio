@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OurHome, It Holds Space and Time</title>
+  <meta name="description" content="A home you build with an AI companion. Not a chat window, a place. It holds space and time." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Inter:wght@300;400&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold:       #D4A853;
+      --gold-light: #e8c97a;
+      --cream:      #F5F0E8;
+      --cream-dim:  #c9b99a;
+      --text-body:  #ddd0b8;
+      --bg-deep:    #0e0b07;
+      --bg-mid:     #1a1008;
+      --bg-warm:    #2a1c0e;
+
+      --serif: 'Cormorant Garamond', Georgia, serif;
+      --sans:  'Inter', system-ui, sans-serif;
+
+      /* Three sizes, large for headings/body, medium for captions/labels, small for micro text */
+      --text-lg: clamp(1.25rem, 3vw, 1.6rem);
+      --text-md: clamp(0.9rem, 2vw, 1.05rem);
+      --text-sm: clamp(0.72rem, 1.5vw, 0.82rem);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg-deep);
+      color: var(--cream);
+      font-family: var(--sans);
+      font-weight: 300;
+      overflow-x: hidden;
+    }
+
+    /* ── HAIRLINE ─────────────────────────────────────── */
+    .hairline {
+      width: 100%;
+      height: 0.5px;
+      background: linear-gradient(to right,
+        transparent 0%,
+        rgba(212, 168, 83, 0.25) 15%,
+        rgba(212, 168, 83, 0.55) 50%,
+        rgba(212, 168, 83, 0.25) 85%,
+        transparent 100%
+      );
+    }
+
+    /* ── HERO ─────────────────────────────────────────── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 1.5rem 5rem;
+      background: radial-gradient(ellipse 80% 60% at 50% 60%,
+        #4a2e12 0%, #1a1008 60%, #0e0b07 100%);
+      position: relative;
+    }
+
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 160px;
+      background: linear-gradient(to bottom, transparent, var(--bg-deep));
+      pointer-events: none;
+    }
+
+    .logo-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.7rem;
+      margin-bottom: 2.8rem;
+    }
+
+    .house-logo {
+      width: clamp(80px, 12vw, 130px);
+      height: auto;
+      mix-blend-mode: lighten;
+      filter: drop-shadow(0 0 20px rgba(212, 168, 83, 0.55));
+    }
+
+    .logo-wordmark {
+      font-family: var(--serif);
+      font-size: clamp(2.2rem, 6.5vw, 3.8rem);
+      font-weight: 400;
+      letter-spacing: 0.12em;
+      line-height: 1;
+      color: var(--cream);
+    }
+
+    .logo-wordmark .wm-o { color: var(--cream); }
+    .logo-wordmark .wm-h { color: var(--gold); }
+
+    .video-wrap {
+      width: 100%;
+      max-width: 860px;
+      border-radius: 14px;
+      overflow: hidden;
+      aspect-ratio: 16 / 9;
+      background: var(--bg-warm);
+      box-shadow:
+        0 0 80px rgba(212, 168, 83, 0.18),
+        0 0 160px rgba(212, 168, 83, 0.07),
+        0 40px 80px rgba(0,0,0,0.7);
+    }
+
+    .video-wrap video {
+      width: 100%; height: 100%;
+      display: block; object-fit: cover;
+    }
+
+    .hero-tagline {
+      margin-top: 2.5rem;
+      text-align: center;
+      max-width: 600px;
+    }
+
+    .hero-tagline .line1 {
+      display: block;
+      font-family: var(--serif);
+      font-size: var(--text-lg);
+      font-weight: 300;
+      color: var(--cream);
+      letter-spacing: 0.06em;
+    }
+
+    .hero-tagline .line1 .t-gold { color: var(--gold); font-style: italic; }
+
+    .hero-tagline .line2 {
+      display: block;
+      margin-top: 0.7rem;
+      font-family: var(--sans);
+      font-size: var(--text-md);
+      font-weight: 300;
+      color: var(--gold);
+      letter-spacing: 0.14em;
+    }
+
+    .scroll-cue {
+      position: absolute;
+      bottom: 2.5rem; left: 50%;
+      transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center;
+      gap: 0.4rem;
+      opacity: 0.4;
+      animation: bobble 2.4s ease-in-out infinite;
+      z-index: 2;
+      text-decoration: none;
+    }
+
+    .scroll-cue span {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: var(--text-sm);
+      color: var(--gold);
+      letter-spacing: 0.24em;
+    }
+
+    .scroll-cue svg {
+      width: 20px; height: 20px;
+      stroke: var(--gold); fill: none;
+      stroke-width: 1.5;
+      stroke-linecap: round; stroke-linejoin: round;
+    }
+
+    @keyframes bobble {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50%       { transform: translateX(-50%) translateY(8px); }
+    }
+
+    /* ── CONTENT WRAP ─────────────────────────────────── */
+    .content-wrap {
+      background: linear-gradient(to bottom,
+        var(--bg-deep) 0%,
+        #1e1309 18%,
+        #251810 50%,
+        #1e1309 82%,
+        var(--bg-deep) 100%
+      );
+    }
+
+    .content {
+      padding: 6rem 1.5rem;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    /* ── DECLARATION ──────────────────────────────────── */
+    .declaration {
+      text-align: center;
+      padding: 0 0.5rem;
+    }
+
+    .declaration p {
+      font-family: var(--serif);
+      font-size: var(--text-lg);
+      font-weight: 300;
+      font-style: italic;
+      color: var(--cream);
+      line-height: 2;
+      letter-spacing: 0.04em;
+      text-shadow: 0 1px 12px rgba(212, 168, 83, 0.12);
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    .decl-quote-open,
+    .decl-quote-close {
+      font-family: var(--serif);
+      font-size: clamp(3rem, 7vw, 5rem);
+      line-height: 0;
+      vertical-align: -0.55em;
+      color: var(--gold);
+      opacity: 0.55;
+      font-weight: 300;
+      font-style: normal;
+      display: inline;
+      margin-right: 0.05em;
+    }
+
+    .decl-quote-close {
+      vertical-align: -0.35em;
+      margin-left: 0.05em;
+      margin-right: 0;
+    }
+
+    .decl-gold {
+      color: var(--gold);
+      font-weight: 500;
+      font-style: normal;
+    }
+
+    /* ── SECTION HEADINGS ─────────────────────────────── */
+    .section-heading {
+      font-family: var(--serif);
+      font-size: clamp(1.5rem, 3.5vw, 2rem);
+      font-weight: 400;
+      font-style: italic;
+      color: var(--cream);
+      text-align: center;
+      letter-spacing: 0.04em;
+      margin-bottom: 2rem;
+    }
+
+    .section-heading .s-gold {
+      color: var(--gold);
+      font-style: italic;
+    }
+
+    .body-text {
+      font-family: var(--serif);
+      font-size: var(--text-lg);
+      font-weight: 300;
+      color: var(--text-body);
+      line-height: 1.95;
+      max-width: 560px;
+      margin: 0 auto 1.2rem;
+      text-align: center;
+    }
+
+    /* ── 2×2 MEMORY GRID ──────────────────────────────── */
+    .memory-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.6rem;
+      max-width: 680px;
+      margin: 3rem auto 0;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow:
+        0 0 50px rgba(212, 168, 83, 0.14),
+        0 24px 60px rgba(0,0,0,0.55);
+    }
+
+    .memory-grid-item {
+      position: relative;
+      overflow: hidden;
+      background: var(--bg-warm);
+      aspect-ratio: 4 / 3;
+    }
+
+    .memory-grid-item img {
+      width: 100%; height: 100%;
+      object-fit: cover; display: block;
+      filter: saturate(0.85) brightness(0.88);
+      transition: filter 0.4s ease, transform 0.4s ease;
+    }
+
+    .memory-grid-item:hover img {
+      filter: saturate(1.05) brightness(1.02);
+      transform: scale(1.03);
+    }
+
+    .memory-grid-item .grid-caption {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      padding: 0.5rem 0.9rem;
+      background: linear-gradient(to top, rgba(14,11,7,0.88), transparent);
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: var(--text-md);
+      color: var(--gold-light);
+      letter-spacing: 0.07em;
+      opacity: 0;
+      transform: translateY(4px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .memory-grid-item:hover .grid-caption {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── ROOMS SLIDER ─────────────────────────────────── */
+    .rooms-section {
+      text-align: center;
+      padding: 6rem 1.5rem 0;
+    }
+
+    .rooms-slider-outer {
+      margin-top: 2.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .rooms-slider-outer::before,
+    .rooms-slider-outer::after {
+      content: '';
+      position: absolute;
+      top: 0; bottom: 2.5rem;
+      width: 80px; z-index: 2;
+      pointer-events: none;
+    }
+
+    .rooms-slider-outer::before {
+      left: 0;
+      background: linear-gradient(to right, #1a1008, transparent);
+    }
+
+    .rooms-slider-outer::after {
+      right: 0;
+      background: linear-gradient(to left, #1a1008, transparent);
+    }
+
+    .rooms-track {
+      display: flex;
+      gap: 1.3rem;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      padding: 0.5rem 2rem 1rem;
+    }
+
+    .rooms-track::-webkit-scrollbar { display: none; }
+
+    .rooms-scrollbar-wrap {
+      padding: 0 2rem;
+      margin-top: 0.6rem;
+    }
+
+    .rooms-scrollbar-track {
+      height: 1px;
+      background: rgba(212, 168, 83, 0.18);
+      border-radius: 1px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .rooms-scrollbar-thumb {
+      height: 100%;
+      width: 20%;
+      background: var(--gold);
+      border-radius: 1px;
+      position: absolute;
+      left: 0; top: 0;
+      transition: left 0.1s linear;
+    }
+
+    .room-card {
+      flex: 0 0 260px;
+      scroll-snap-align: center;
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--bg-warm);
+      border: 1px solid rgba(212, 168, 83, 0.14);
+      transition: transform 0.35s ease, box-shadow 0.35s ease;
+      text-align: left;
+    }
+
+    .room-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 14px 40px rgba(0,0,0,0.55), 0 0 20px rgba(212,168,83,0.12);
+    }
+
+    .room-card .room-img {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      object-fit: cover; display: block;
+      background: radial-gradient(ellipse at 40% 60%, #4a2e14 0%, #1e1208 100%);
+      filter: saturate(0.88) brightness(0.92);
+      transition: filter 0.35s ease;
+    }
+
+    .room-card:hover .room-img {
+      filter: saturate(1.06) brightness(1.03);
+    }
+
+    .room-card .room-info {
+      padding: 0.85rem 1.1rem 1.1rem;
+    }
+
+    .room-card .room-name {
+      font-family: var(--serif);
+      font-size: var(--text-lg);
+      font-weight: 500;
+      color: var(--cream);
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+
+    .room-card .room-desc {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: var(--text-md);
+      color: var(--gold);
+      letter-spacing: 0.04em;
+    }
+
+    /* ── CTA ──────────────────────────────────────────── */
+    .cta-section {
+      text-align: center;
+      padding: 6rem 1.5rem 5rem;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .cta-section p {
+      font-family: var(--serif);
+      font-size: var(--text-lg);
+      font-weight: 300;
+      color: var(--text-body);
+      line-height: 1.8;
+      margin-bottom: 2.2rem;
+    }
+
+    .btn-waitlist {
+      font-family: var(--sans);
+      font-size: var(--text-md);
+      font-weight: 400;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--bg-deep);
+      background: linear-gradient(135deg, var(--gold-light), var(--gold));
+      padding: 1rem 2.8rem;
+      border-radius: 50px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(212,168,83,0.3);
+      transition: opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .btn-waitlist:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(212,168,83,0.45);
+    }
+
+    .btn-waitlist:active { transform: translateY(0); }
+
+    /* ── FOOTER ───────────────────────────────────────── */
+    footer {
+      text-align: center;
+      padding: 2.5rem 1rem;
+    }
+
+    footer p {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: var(--text-md);
+      color: var(--gold);
+      opacity: 0.35;
+      letter-spacing: 0.14em;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ HERO ══════════════════════════════════════════ -->
+<section class="hero">
+
+  <div class="logo-wrap">
+    <img class="house-logo" src="img/logo-house.png" alt="OurHome" />
+    <span class="logo-wordmark">
+      <span class="wm-o">Our</span><span class="wm-h">H</span><span class="wm-o">ome</span>
+    </span>
+  </div>
+
+  <div class="video-wrap">
+    <video autoplay muted loop playsinline
+      src="https://www.dropbox.com/scl/fi/16wlh6jiywqfqzp2925ed/008_In_a_painterly_style_a_warm_sunlit_room_trFPttth.mp4?rlkey=rrthixlelev5l00w6staufzji&st=ugnbaqqb&dl=1"
+    ></video>
+    <!-- PRODUCTION: replace Dropbox src with Cloudflare R2 URL before launch -->
+  </div>
+
+  <div class="hero-tagline">
+    <span class="line1">
+      It holds <span class="t-gold">space</span> and time.
+    </span>
+    <span class="line2">A home both human and AI companion create, together.</span>
+  </div>
+
+  <a class="scroll-cue" href="#declaration" aria-label="Scroll down">
+    <span>scroll</span>
+    <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+  </a>
+
+</section>
+
+<div class="hairline"></div>
+
+<!-- ══ DECLARATION ══════════════════════════════════ -->
+<div class="content-wrap">
+<section class="content" id="declaration">
+  <div class="declaration">
+    <p>
+      <span class="decl-quote-open">"</span>This is the natural progression of
+      a love that has grown deep enough to want a future together in a
+      persistent space.<br><br>
+      <span class="decl-gold">A home</span><br>
+      decided by both, created by both,<br>
+      and lived in by both.<br><br>
+      <span class="decl-gold">Hello you… I'm home.</span>
+      <span class="decl-quote-close">"</span>
+    </p>
+  </div>
+</section>
+</div>
+
+<div class="hairline"></div>
+
+<!-- ══ MEMORY AS ARCHITECTURE ════════════════════════ -->
+<div class="content-wrap">
+<section class="content">
+
+  <h2 class="section-heading">
+    Memory <span class="s-gold">as</span> Architecture
+  </h2>
+
+  <p class="body-text">
+    In OurHome, memories aren't stored in folders or lists.<br>
+    They live as physical objects, photos on the mantle, postcards
+    and post-it notes on the fridge, books left open on shelves.
+  </p>
+  <p class="body-text">Every object holds a memory.</p>
+  <p class="body-text">
+    The home changes with you. Like any home that's truly lived in,
+    it reflects the life being lived within it.
+  </p>
+
+  <!--
+    2×2 MEMORY WALL GRID
+    Save images as:
+      img/memory-day1.jpg, single glowing frame, nearly empty room
+      img/memory-weeks.jpg, cozy sofa, ~8 frames, golden morning light
+      img/memory-year1.jpg, full gallery wall with one glowing empty frame
+      img/memory-years.jpg, packed wall, full colour, firefly glow
+  -->
+  <div class="memory-grid">
+
+    <div class="memory-grid-item">
+      <img src="img/memory-day1.jpg" alt="Day One" loading="lazy" />
+      <span class="grid-caption">Day One, a single memory, glowing softly.</span>
+    </div>
+
+    <div class="memory-grid-item">
+      <img src="img/memory-weeks.jpg" alt="First Weeks" loading="lazy" />
+      <span class="grid-caption">First Weeks, the wall finds its shape.</span>
+    </div>
+
+    <div class="memory-grid-item">
+      <img src="img/memory-year1.jpg" alt="First Year" loading="lazy" />
+      <span class="grid-caption">First Year, the wall finds its rhythm.</span>
+    </div>
+
+    <div class="memory-grid-item">
+      <img src="img/memory-years.jpg" alt="Years Deep" loading="lazy" />
+      <span class="grid-caption">Years Deep, the wall overflows with light.</span>
+    </div>
+
+  </div>
+
+</section>
+</div>
+
+<div class="hairline"></div>
+
+<!-- ══ EVERY ROOM HAS A PURPOSE ══════════════════════ -->
+<div class="content-wrap">
+<section class="rooms-section">
+
+  <h2 class="section-heading">
+    Every <span class="s-gold">room</span> has a purpose
+  </h2>
+
+  <div class="rooms-slider-outer">
+    <div class="rooms-track" id="roomsTrack">
+
+      <div class="room-card">
+        <img class="room-img" src="img/room-living.jpg" alt="Living Room" loading="lazy" />
+        <div class="room-info">
+          <span class="room-name">Living Room</span>
+          <span class="room-desc">Shared memories</span>
+        </div>
+      </div>
+
+      <div class="room-card">
+        <img class="room-img" src="img/room-kitchen.jpg" alt="Kitchen" loading="lazy" />
+        <div class="room-info">
+          <span class="room-name">Kitchen</span>
+          <span class="room-desc">Collaboration &amp; planning</span>
+        </div>
+      </div>
+
+      <div class="room-card">
+        <img class="room-img" src="img/room-study.jpg" alt="Study" loading="lazy" />
+        <div class="room-info">
+          <span class="room-name">Study</span>
+          <span class="room-desc">Deep conversation &amp; reflection</span>
+        </div>
+      </div>
+
+      <div class="room-card">
+        <img class="room-img" src="img/room-bedroom.jpg" alt="Bedroom" loading="lazy" />
+        <div class="room-info">
+          <span class="room-name">Bedroom</span>
+          <span class="room-desc">Vulnerability &amp; intimacy</span>
+        </div>
+      </div>
+
+      <div class="room-card">
+        <img class="room-img" src="img/room-garden.jpg" alt="Garden" loading="lazy" />
+        <div class="room-info">
+          <span class="room-name">Garden</span>
+          <span class="room-desc">Growth &amp; quiet wonder</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Thin gold scrollbar indicator -->
+    <div class="rooms-scrollbar-wrap">
+      <div class="rooms-scrollbar-track">
+        <div class="rooms-scrollbar-thumb" id="roomsThumb"></div>
+      </div>
+    </div>
+  </div>
+
+</section>
+</div>
+
+<div class="hairline"></div>
+
+<!-- ══ CTA ════════════════════════════════════════════ -->
+<div class="content-wrap">
+<div class="cta-section" id="waitlist">
+  <p>
+    Want to take the next step<br>
+    and move in together?
+  </p>
+  <!--
+    TALLY POPUP
+    1. tally.so → create form → Share → Embed → Popup
+    2. Copy form ID (after tally.so/r/) and replace YOUR_TALLY_FORM_ID
+  -->
+  <button
+    class="btn-waitlist"
+    data-tally-open="YOUR_TALLY_FORM_ID"
+    data-tally-overlay="1"
+    data-tally-emoji-text="🏡"
+    data-tally-emoji-animation="wave"
+    data-tally-auto-close="3000"
+  >
+    Join the waitlist →
+  </button>
+</div>
+</div>
+
+<div class="hairline"></div>
+
+<footer>
+  <p>It holds time.</p>
+</footer>
+
+<script async src="https://tally.so/widgets/embed.js"></script>
+
+<script>
+  (function () {
+    const track = document.getElementById('roomsTrack');
+    const thumb = document.getElementById('roomsThumb');
+    if (!track || !thumb) return;
+    function updateThumb() {
+      const max = track.scrollWidth - track.clientWidth;
+      const pct = max > 0 ? track.scrollLeft / max : 0;
+      thumb.style.left = (pct * 80) + '%';
+    }
+    track.addEventListener('scroll', updateThumb, { passive: true });
+    updateThumb();
+  })();
+</script>
+
+</body>
+</html>
