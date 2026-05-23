@@ -1,0 +1,9 @@
+node_modules
+.next
+out
+build
+.env*
+.vscode
+.mdx-data
+*.log
+hermes-webui
