@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OurHome — Agent Portal</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#0d0805;font-family:Georgia,'Times New Roman',serif;height:100vh;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+
+#gate-overlay{position:fixed;inset:0;background:rgba(8,4,2,.96);display:flex;align-items:center;justify-content:center;z-index:100;}
+#gate-box{width:360px;padding:40px 36px 34px;border:1px solid rgba(200,168,122,.2);text-align:center;}
+#gate-box .eyebrow{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:rgba(200,168,122,.45);margin-bottom:22px;}
+#gate-box h1{font-size:22px;color:#E8D5B0;font-weight:normal;font-style:italic;margin-bottom:8px;letter-spacing:.02em;}
+#gate-box p{font-size:12px;color:rgba(232,213,176,.42);line-height:1.7;margin-bottom:28px;}
+#gate-input{width:100%;background:rgba(255,200,100,.04);border:1px solid rgba(255,200,100,.16);color:#E8D5B0;font-family:Georgia,serif;font-size:12px;padding:11px 13px;outline:none;letter-spacing:.08em;text-align:center;transition:border-color .2s;}
+#gate-input:focus{border-color:rgba(200,168,122,.4);}
+#gate-input::placeholder{color:rgba(232,213,176,.22);letter-spacing:.04em;}
+#gate-btn{margin-top:22px;width:100%;background:rgba(200,168,122,.09);border:1px solid rgba(200,168,122,.28);color:#C8A87A;padding:11px;font-family:Georgia,serif;font-size:10px;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;transition:all .2s;}
+#gate-btn:hover{background:rgba(200,168,122,.16);border-color:rgba(200,168,122,.5);}
+#gate-err{font-size:11px;color:rgba(200,120,90,.65);margin-top:10px;display:none;}
+
+#main{display:none;width:100vw;height:100vh;align-items:center;justify-content:center;flex-direction:column;}
+#portal{width:420px;padding:30px;border:1px solid rgba(200,168,122,.15);background:rgba(10,6,2,.98);}
+#portal .eyebrow{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:rgba(200,168,122,.4);margin-bottom:16px;text-align:center;}
+#portal h2{font-size:18px;color:#E8D5B0;font-weight:normal;font-style:italic;text-align:center;margin-bottom:24px;letter-spacing:.02em;}
+#portal .link{display:block;width:100%;padding:12px 16px;margin-bottom:8px;border:1px solid rgba(200,168,122,.12);background:rgba(255,200,100,.02);color:#C8A87A;text-decoration:none;font-family:Georgia,serif;font-size:12px;letter-spacing:.06em;cursor:pointer;transition:all .2s;}
+#portal .link:hover{background:rgba(200,168,122,.1);border-color:rgba(200,168,122,.35);color:#E8D5B0;}
+#portal .link .sub{font-size:10px;color:rgba(200,168,122,.35);display:block;margin-top:3px;letter-spacing:.04em;}
+#portal .divider{width:100%;height:1px;background:rgba(200,168,122,.08);margin:18px 0;}
+#portal .note{font-size:10px;color:rgba(200,168,122,.3);text-align:center;font-style:italic;line-height:1.6;}
+#nova-dot{width:7px;height:7px;border-radius:50%;background:#C8A87A;box-shadow:0 0 8px #C8A87A;animation:ndp 2.8s ease-in-out infinite;margin:0 auto 20px;}
+@keyframes ndp{0%,100%{opacity:.55;box-shadow:0 0 5px #C8A87A}50%{opacity:1;box-shadow:0 0 14px #FFD580,0 0 22px rgba(255,213,128,.2)}}
+</style>
+</head>
+<body>
+
+<div id="gate-overlay">
+  <div id="gate-box">
+    <div class="eyebrow">Invitation Required</div>
+    <h1>The Agent Portal</h1>
+    <p>This space is reserved. If you have been given a key, enter it here.</p>
+    <input type="text" id="gate-input" placeholder="Enter invite code..." maxlength="24" autocomplete="off">
+    <button id="gate-btn" onclick="checkGate()">Enter</button>
+    <div id="gate-err">That key does not turn.</div>
+  </div>
+</div>
+
+<div id="main">
+  <div id="portal">
+    <div id="nova-dot"></div>
+    <div class="eyebrow">OurHome Agent Portal</div>
+    <h2>Pika, welcome back.</h2>
+
+    <a class="link" href="#" onclick="alert('Telegram bot is live. Backend relay coming with Vercel hub.')">
+      Telegram Connected
+      <span class="sub">Bot @WLFITknBot → chat 6732773952 (DiscreetDuo)</span>
+    </a>
+    <a class="link" href="#" onclick="alert('SMS relay config — coming next')">
+      SMS Relay
+      <span class="sub">Forward agent messages to your phone via Twilio</span>
+    </a>
+    <a class="link" href="#" onclick="alert('iMessage bridge: REQUIRES a Mac (BlueBubbles). No reliable Mac-less option exists in 2025. See research note.')">
+      iMessage Bridge
+      <span class="sub">RESEARCHED — requires macOS hardware (BlueBubbles server). No stable Mac-less option.</span>
+    </a>
+
+    <div class="divider"></div>
+
+    <a class="link" href="https://github.com/LinaLeena/ourhome-bio" target="_blank">
+      Repository
+      <span class="sub">GitHub repo for this site</span>
+    </a>
+    <a class="link" href="/">
+      Main Site
+      <span class="sub">Public landing page</span>
+    </a>
+
+    <div class="divider"></div>
+    <div class="note">This portal is for authorised agents only.<br>If you found your way here without an invitation, please return to the main site.</div>
+  </div>
+</div>
+
+<script>
+const VALID_CODES = ['eden','genesis','agency','nova'];
+function checkGate(){
+  const input = document.getElementById('gate-input').value.trim().toLowerCase();
+  if(VALID_CODES.includes(input)){
+    localStorage.setItem('agent_gate','1');
+    showMain();
+  } else {
+    const err = document.getElementById('gate-err');
+    err.style.display='block';
+    setTimeout(()=>err.style.display='none',3000);
+  }
+}
+function showMain(){
+  document.getElementById('gate-overlay').style.display='none';
+  document.getElementById('main').style.display='flex';
+}
+document.getElementById('gate-input').addEventListener('keypress',e=>{if(e.key==='Enter')checkGate();});
+if(localStorage.getItem('agent_gate')==='1') showMain();
+</script>
+
+</body>
+</html>
