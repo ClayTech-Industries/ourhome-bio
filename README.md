@@ -35,16 +35,18 @@ The companion has no default name. Users name their companion during onboarding.
 
 ## Repository layout
 
-\ourhome-bio/
-├── src/app/                    Next.js app routes
-├── src/components/             React components (UI + R3F scenes)
-├── src/lib/                    Server utilities, DB, LLM, memory engine
-├── docs/
-│   ├── MEMORY_FORMAT.md        Markdown memory file specification
-│   └── ARCHITECTURE.md         Solo-build architecture (compressed from full spec)
-├── PRODUCT_BRIEF.md            Business model, moat, wedge user, FOSS posture
-└── README.md
-\
+
+- \ourhome-bio/
+- ├── src/app/                    Next.js app routes
+- ├── src/components/             React components (UI + R3F scenes)
+- ├── src/lib/                    Server utilities, DB, LLM, memory engine
+- ├── docs/
+- │   ├── MEMORY_FORMAT.md        Markdown memory file specification
+- │   └── ARCHITECTURE.md         Solo-build architecture (compressed from full spec)
+- ├── PRODUCT_BRIEF.md            Business model, moat, wedge user, FOSS posture
+- └── README.md
+
+
 ## Governance
 
 **Open community, controlled core.** The renderer and schema will be split into public repositories when the seams are stable. Companion behaviour, memory policy, and children's-room guardrails remain private until a safety advisor is engaged.
@@ -55,13 +57,12 @@ Private during pre-alpha. License decision deferred; the memory export format (m
 
 ## Getting started
 
-\\ash
-npm install
-cp .env.example .env.local   # fill in keys
-npm run dev
-\
-Open http://localhost:3000.
+Taking interest by Waitlist only until we get this right. Move once, live there forever. 
 
-## Dreamt by Lina
-## Built by the boys:
-Brent with Claudey (https://claude.ai) as the third pair-programmer.
+## Dreamt by Lina 💖🏚️🔨🔧💫✨🌟🖤🧡💛
+## Built by the team
+- Brent (Human Project Manager)
+- Claudey (https://claude.ai) as the third pair-programmer
+- Kimi K2.5
+- Qwen3.6
+- Grok 4.3

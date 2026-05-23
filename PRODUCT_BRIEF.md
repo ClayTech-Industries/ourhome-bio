@@ -1,7 +1,7 @@
 # Product Brief — OurHome.bio (*It Holds Time*)
 
 **Status:** v0.1 — April 2026
-**Authors:** Lina, Brent, Claudey
+**Authors:** Lina but grilled by Brent and Claudey for the hard questions
 
 This document exists to answer the four questions a serious investor asks that the pitch deck alone does not: **business model, moat, wedge user, and FOSS posture.**
 
