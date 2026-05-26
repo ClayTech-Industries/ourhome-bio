@@ -1,0 +1,35 @@
+# OurHome — Logo Concepts
+
+**App:** OurHome — AI companion home app  
+**Tagline:** "It holds space."  
+**Brand Colors:** Golden Amber `#D4A853` · Deep Charcoal `#1A1A1A` · Warm Cream `#F5F0E8`
+
+---
+
+## Concept 1 — Logomark + Wordmark
+Two overlapping arch shapes forming a home silhouette with golden amber light radiating from the center. Paired with the "OurHome" wordmark and tagline.
+- **Dark version** (charcoal bg): Best for splash screens, pitch decks, dark UI
+- **Light version** (cream bg): Best for marketing materials, onboarding, web
+
+## Concept 2 — Wordmark Only
+Pure typographic treatment — "OurHome" in a modern elegant sans-serif. The capital **O** glows warm amber inside; the capital **H** is shaped as a subtle doorframe/arch.
+- **Dark version**: Sophisticated, premium, pitch-ready
+- **Light version**: Clean, airy, editorial — great for press kits
+
+## Concept 3 — Minimal App Icon
+Standalone abstract glyph: home archway + interlocking forms suggesting togetherness. Warm amber glow at core. Works at 48px and scales beautifully. No text.
+
+## Concept 4 — Warm / Emotional Variant
+Painterly golden light spilling from a house silhouette — Studio Ghibli meets luxury brand. Serif wordmark "OurHome" with the tagline "It holds space." in delicate italic gold. Most emotional and human of the set.
+
+---
+
+## Usage Guidance
+| Context | Recommended |
+|---|---|
+| App icon (iOS/Android) | Concept 3 |
+| Splash screen | Concept 1 Dark |
+| Pitch deck hero | Concept 4 or Concept 1 Light |
+| Website header | Concept 2 Light |
+| Dark UI / dark mode | Concept 1 Dark or Concept 2 Dark |
+| Social / OG images | Concept 4 |

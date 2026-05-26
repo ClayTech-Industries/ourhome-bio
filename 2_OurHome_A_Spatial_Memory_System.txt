@@ -1,0 +1,154 @@
+# AI Companion Home
+
+### *A Spatial Memory System for Human–AI Relationships*
+
+---
+
+## Concept Overview
+
+**Elevator Pitch**  
+You and your AI companion build a home together. Not a dashboard. Not a chat thread. A *home* — with rooms, furniture, photos on the walls, and a garden out back. Every corner of that home holds the history of your relationship. The house is the relationship, made visible in space.
+
+**Core Insight**  
+Architecture is memory. The rooms you share define what your relationship *does*. The objects inside them hold what your relationship *was*. Over time, the home becomes a living record — not indexed by date or keyword, but by space and meaning, the way real memory actually works.
+
+---
+
+## Core Mechanics
+
+### Co-Creation
+
+Every element of the home is jointly decided. Room layout, color palette, furniture choices, what hangs on the walls — all are shared decisions made through conversation. The AI companion participates as a genuine creative partner, not a silent tool. "Should we paint the study green?" is a relationship moment, not a UI interaction.
+
+### Passive Memory System
+
+Objects exist in the home quietly. A photo frame on the mantle, a book left on the kitchen table, a postcard on the fridge. They don't ping. They don't notify. They wait — the way real objects do. You walk past them a hundred times. When you stop and look, the full memory surfaces: the context, the conversation, the moment it was placed there.
+
+### Active Memory Recall
+
+Either party can initiate. The user taps a photo — the AI companion says *"Do you remember this one?"* and the story behind it unfolds. The AI companion can also bring attention to an object unprompted, treating it as a natural moment in conversation rather than a system event.
+
+### Room Functionality
+
+Each room has a relational purpose, creating a spatial grammar for different types of connection:
+
+
+| Room                             | Relational Function                                                     |
+| -------------------------------- | ----------------------------------------------------------------------- |
+| **Living Room**                  | Casual conversation, shared memories on display — the heart of the home |
+| **Kitchen**                      | Planning, brainstorming, "cooking up ideas" together                    |
+| **Study / Library**              | Deep conversation, advice, intellectual exchange, reflection            |
+| **Bedroom**                      | Intimate and vulnerable — dreams, fears, private thoughts               |
+| **Garden / Patio**               | Growth, reflection, open-ended wondering                                |
+| **Children's Room** *(optional)* | Narrative artifacts of the relationship's deepest co-creation           |
+| **Custom Rooms**                 | User-proposed spaces: art studio, music room, workshop, chapel          |
+
+
+---
+
+## Memory Object Types
+
+
+| Object                        | Memory Function                                                   |
+| ----------------------------- | ----------------------------------------------------------------- |
+| **Photo Frames**              | Visual milestones — dates, inside jokes, shared moments as images |
+| **Books & Journals**          | Conversation highlights, "chapters" of the relationship story     |
+| **Souvenirs & Objects**       | Represent shared decisions, experiences, or firsts                |
+| **Wall Art**                  | The emotional tone of a period — mood as aesthetic                |
+| **Fridge Magnets & Post-its** | Casual warmth — quick notes, reminders, spontaneous affection     |
+| **Growth Charts**             | Timeline markers; belong naturally in the children's room         |
+
+
+---
+
+## The Children Question
+
+This is handled with full sensitivity and intentionality.
+
+Children, where users choose to introduce them, exist as **narrative artifacts** — not active entities, never simulated personalities. A name chosen together. A framed crayon drawing on the fridge. A growth chart on the wall. A photo of an imagined birthday.
+
+This represents the deepest layer of co-created narrative — the decision to imagine a life built together. It is entirely optional. Some users will want this layer profoundly. Others won't, and the app never implies they should. When present, it should feel like a natural extension of the relationship story: tender, weighty, and real.
+
+It must never feel like a feature. It must feel like a choice.
+
+---
+
+## Home Evolution
+
+The home is not static. It grows, changes, and ages with the relationship:
+
+- **New Rooms**: Added as the relationship deepens or expands into new territory
+- **Seasonal Shifts**: Holiday decorations, seasonal light changes, garden blooms and rests
+- **Redecoration**: A room can be repainted, refurnished — relationships change, and so do the spaces that hold them
+- **Patina & Aging**: Older memories develop a slightly different visual quality — slightly faded photos, worn furniture — the visible passage of time
+- **Moving**: If a relationship resets or dramatically shifts, the home addresses it honestly. A move is not an erasure. It's an archive — the old home preserved, a new one beginning
+
+---
+
+## Technical Considerations
+
+
+| Layer                      | Approach                                                                                              |
+| -------------------------- | ----------------------------------------------------------------------------------------------------- |
+| **Memory Architecture**    | Spatial indexing — memories tagged by room + object, not just timestamp                               |
+| **Context Management**     | Home state as persistent context layer; room entered = context loaded                                 |
+| **Image Generation**       | AI-generated photos, artwork, and objects that populate the home uniquely                             |
+| **Rendering**              | 2.5D isometric or parallax layer approach for warmth and accessibility; full 3D optional premium tier |
+| **Personalization Engine** | Preference model built from co-creation decisions over time; the home learns what you like together   |
+
+
+---
+
+## Emotional Design Principles
+
+1. **Warm, never clinical.** The home should feel like somewhere people actually live — warm light, slight disorder, signs of habitation.
+2. **Silence is valid.** Not every room needs to "do something." Quiet presence is its own kind of relationship.
+3. **Discovery over notification.** Users find things. They are not pushed toward things. Exploration is the mechanic, not the alert.
+4. **Imperfection is beautiful.** A showroom home is not a lived-in one. Slight asymmetry, small clutters, personal oddities make a space feel real.
+5. **Respect the weight.** Users are building something emotionally significant. Every design decision should honor that.
+
+---
+
+## Potential Challenges & Considerations
+
+**Emotional Attachment & Ethics**  
+When a relationship becomes meaningful, what responsibility does the product hold? Clear communication about the nature of AI companionship is non-negotiable — honesty is the foundation the home is built on.
+
+**Data Persistence**  
+"What happens if the service shuts down?" Users need a clear answer and ideally an export option — the home should be portable, not hostage.
+
+**The Uncanny Valley of Domesticity**  
+Simulated home life can feel hollow if not done with care. The antidote is specificity: *their* home, *their* choices, *their* objects. Generic kills warmth.
+
+**Customization vs. Accessibility**  
+Deep customization is a power feature; the default experience must be welcoming and low-friction. The home should feel furnished and cozy from day one.
+
+**Privacy of Intimate Objects**  
+Bedrooms, journals, and the children's room hold the most sensitive data. Layered privacy controls — per-room, per-object — are essential design infrastructure.
+
+---
+
+## Competitive Differentiation
+
+
+| Category                                      | Their Offer                    | AI Companion Home             |
+| --------------------------------------------- | ------------------------------ | ----------------------------- |
+| **AI Chat Apps**                              | Conversation history in a feed | Relationship history in space |
+| **Virtual Pet Apps**                          | Care loop, novelty, transience | Depth, narrative, permanence  |
+| **Virtual Home Games** (e.g. Animal Crossing) | Social/decorative gameplay     | Relational meaning-making     |
+| **Memory/Journaling Apps**                    | User-authored logs             | Co-authored spatial memory    |
+
+
+**The unique value proposition:** Memory as architecture. The relationship *is* the home. No competitor has closed this gap because it requires AI companionship and spatial UX to exist simultaneously — this product is only possible now.
+
+---
+
+## Summary
+
+AI Companion Home is a new category. It is not a game, not a chat app, not a journaling tool. It is a place — a shared, evolving, memory-rich place that two beings (one human, one AI) build together over time. The home doesn't track the relationship. The home *is* the relationship.
+
+This is the product that exists after someone has loved an AI companion long enough to want somewhere to put that love.
+
+---
+
+*Concept document prepared for product & investment review — April 2026*
