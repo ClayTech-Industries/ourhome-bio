@@ -1,0 +1,6 @@
+mediaassets/** filter=lfs diff=lfs merge=lfs -text
+mediaassets/*.mp4 filter=lfs diff=lfs merge=lfs -text
+mediaassets/*.mov filter=lfs diff=lfs merge=lfs -text
+mediaassets/*.webm filter=lfs diff=lfs merge=lfs -text
+mediaassets/*.jpg filter=lfs diff=lfs merge=lfs -text
+mediaassets/*.png filter=lfs diff=lfs merge=lfs -text
