@@ -1,7 +1,0 @@
-{
-  "version": 2,
-  "buildCommand": "npx next build",
-  "outputDirectory": "out",
-  "framework": "nextjs",
-  "installCommand": "npm install"
-}
