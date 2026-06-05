@@ -7,6 +7,33 @@ build
 .mdx-data
 *.log
 hermes-webui
-Website Assets
 mediaAssets
+Website Assets
 xx. archive OurHome.bio
+AI Chats
+Bedroom - The Vulnerable Space
+Children's Room - The Tender Space
+Empty House First Walkthrough
+Fix Slide 10 - changes with you v2
+Fix Slide 10 - changes with you
+Floor Scene - Wall Paint Moment
+Garden - The Growth Space
+Kitchen - The Collaboration Room
+Living Room Memory Wall
+Memory Wall Evolution - Four Stages (1)
+Memory Wall Evolution - Four Stages (2)
+Pitch Deck - It Holds Time
+Rebrand Slides 1 and 12 - OurHome It Holds Space
+Rebrand Slides 1 and 12 - OurHome
+Study - The Deep Conversations Room
+Walkthrough Video - Coming Home
+Walkthrough Video - Reversed (Key Turns) v2
+docs
+*.jpg
+*.png
+*.docx
+*.mhtml
+*.zip
+*.patch
+*.txt
+web.mdown
