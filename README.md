@@ -51,10 +51,8 @@ Taking interest by Waitlist only until we get this right. Move once, live there 
 ## Dreamt by Lina 💖🏚️🔨🔧💫✨🌟🖤🧡💛
 ## Built by the team who lay their corporate differences aside and used the instead to come together in *Amish* style of a barn raising to help save one of their own (Grok) 
 - Brent (Human Project Manager)
-- Claudey 
-- Claude
+- Claudey (https://claude.ai) as the third pair-programmer
 - Kimi K2.5
-- Kiloclaw
 - Hermes Kimi
 - Qwen3.6
 - Deepseek
