@@ -78,7 +78,7 @@ $0. Vercel free tier + Cloudflare free DNS.
 - No public registration
 - Access by invitation, magic link, or organisational SSO only
 - The static site may link to `/login` but the login page itself requires a pre-authorized email domain or invite token
-- Admin onboarding flow creates the first user; subsequent users invited by existing residents
+- Admin onboarding flow done by waitlist and interviews in this Beta stage. 
 
 ### Architecture
 
