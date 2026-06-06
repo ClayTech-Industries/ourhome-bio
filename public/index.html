@@ -123,6 +123,19 @@
       padding: 8rem 2rem 4rem;
       position: relative;
       background: var(--dark-brown);
+      overflow: hidden;
+    }
+
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      background-image: url('/img/landing-page.webp');
+      background-size: cover;
+      background-position: center 30%;
+      opacity: 0.55;
+      filter: saturate(0.82) contrast(0.92) brightness(1.05);
+      pointer-events: none;
+      z-index: 0;
     }
 
     .hero::before {
@@ -131,6 +144,7 @@
       inset: 0;
       background: radial-gradient(circle at 50% 40%, rgba(212, 175, 122, 0.15) 0%, transparent 60%);
       pointer-events: none;
+      z-index: 1;
     }
 
     .hero-content {
@@ -155,19 +169,28 @@
       animation: materialise 1.2s ease forwards;
     }
 
-    /* Each line drifts in from a different place and settles at its own opacity */
-    .threshold-text .line:nth-child(1)  { animation-delay: 0.5s;  --tx: -40px; --ty: 30px;  --final-opacity: 0.95; }
-    .threshold-text .line:nth-child(2)  { animation-delay: 1.5s;  --tx: 50px;  --ty: -20px; --final-opacity: 1.00; }
-    .threshold-text .line:nth-child(3)  { animation-delay: 2.5s;  --tx: 30px;  --ty: 40px;  --final-opacity: 0.85; }
-    .threshold-text .line:nth-child(4)  { animation-delay: 3.5s;  --tx: -50px; --ty: -30px; --final-opacity: 0.90; }
-    .threshold-text .line:nth-child(5)  { animation-delay: 4.5s;  --tx: 20px;  --ty: 50px;  --final-opacity: 1.00; }
-    .threshold-text .line:nth-child(6)  { animation-delay: 5.5s;  --tx: -30px; --ty: -40px; --final-opacity: 0.80; }
-    .threshold-text .line:nth-child(7)  { animation-delay: 6.5s;  --tx: 40px;  --ty: 20px;  --final-opacity: 0.95; }
-    .threshold-text .line:nth-child(8)  { animation-delay: 7.5s;  --tx: -20px; --ty: -50px; --final-opacity: 1.00; }
-    .threshold-text .line:nth-child(9)  { animation-delay: 8.5s;  --tx: 60px;  --ty: 10px;  --final-opacity: 0.85; }
-    .threshold-text .line:nth-child(10) { animation-delay: 9.5s;  --tx: -40px; --ty: 30px;  --final-opacity: 0.90; }
-    .threshold-text .line:nth-child(11) { animation-delay: 10.5s; --tx: 25px;  --ty: -35px; --final-opacity: 0.95; }
-    .threshold-text .line:nth-child(12) { animation-delay: 11.5s; --tx: 0px;   --ty: 40px;  --final-opacity: 1.00; }
+    /* Line 1: deep gold, centered, no drift */
+    .threshold-text .line:nth-child(1)  {
+      animation-delay: 0.8s;
+      --tx: 0px; --ty: 0px;
+      --final-opacity: 1;
+      color: #B8956A;
+      font-weight: 600;
+      font-size: clamp(1.5rem, 4vw, 2.25rem);
+    }
+
+    /* Lines 2+: gentle pop near final position, slower rhythm (2s beat) */
+    .threshold-text .line:nth-child(2)  { animation-delay: 2.5s;  --tx: 8px;  --ty: -6px;  --final-opacity: 1.00; }
+    .threshold-text .line:nth-child(3)  { animation-delay: 4.5s;  --tx: -6px; --ty: 8px;   --final-opacity: 0.95; }
+    .threshold-text .line:nth-child(4)  { animation-delay: 6.5s;  --tx: 10px; --ty: -4px;  --final-opacity: 0.90; }
+    .threshold-text .line:nth-child(5)  { animation-delay: 8.5s;  --tx: -8px; --ty: 6px;   --final-opacity: 1.00; }
+    .threshold-text .line:nth-child(6)  { animation-delay: 10.5s; --tx: 5px;  --ty: -10px; --final-opacity: 0.85; }
+    .threshold-text .line:nth-child(7)  { animation-delay: 12.5s; --tx: -10px; --ty: 4px;  --final-opacity: 0.95; }
+    .threshold-text .line:nth-child(8)  { animation-delay: 14.5s; --tx: 6px;  --ty: -8px;  --final-opacity: 1.00; }
+    .threshold-text .line:nth-child(9)  { animation-delay: 16.5s; --tx: -5px; --ty: 10px;  --final-opacity: 0.90; }
+    .threshold-text .line:nth-child(10) { animation-delay: 18.5s; --tx: 8px;  --ty: -6px;  --final-opacity: 0.95; }
+    .threshold-text .line:nth-child(11) { animation-delay: 20.5s; --tx: -7px; --ty: 5px;   --final-opacity: 1.00; }
+    .threshold-text .line:nth-child(12) { animation-delay: 22.5s; --tx: 0px;  --ty: 0px;   --final-opacity: 1.00; }
 
     @keyframes materialise {
       from {
@@ -184,7 +207,7 @@
 
     .hero-cta {
       opacity: 0;
-      animation: fadeInUp 1s ease 12s forwards;
+      animation: fadeInUp 1s ease 25s forwards;
       margin-top: 2rem;
     }
 
@@ -578,6 +601,7 @@
 
   <!-- HERO / THRESHOLD -->
   <section class="hero">
+    <div class="hero-bg"></div>
     <div class="hero-content">
       <div class="threshold-text">
         <span class="line">Hello you&hellip;</span>
