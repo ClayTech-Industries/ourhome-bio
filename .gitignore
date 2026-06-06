@@ -40,5 +40,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# internal docs / secrets
+.docs/internal/
+*.key
+*.secret
+
 # allow example env file
 !.env.example

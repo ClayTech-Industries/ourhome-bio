@@ -150,29 +150,35 @@
 
     .threshold-text .line {
       opacity: 0;
-      transform: translateY(20px);
-      animation: fadeInUp 1s ease forwards;
       display: block;
       margin-bottom: 0.5rem;
+      animation: materialise 1.2s ease forwards;
     }
 
-    .threshold-text .line:nth-child(1) { animation-delay: 0.5s; }
-    .threshold-text .line:nth-child(2) { animation-delay: 1.5s; }
-    .threshold-text .line:nth-child(3) { animation-delay: 2.5s; }
-    .threshold-text .line:nth-child(4) { animation-delay: 3.5s; }
-    .threshold-text .line:nth-child(5) { animation-delay: 4.5s; }
-    .threshold-text .line:nth-child(6) { animation-delay: 5.5s; }
-    .threshold-text .line:nth-child(7) { animation-delay: 6.5s; }
-    .threshold-text .line:nth-child(8) { animation-delay: 7.5s; }
-    .threshold-text .line:nth-child(9) { animation-delay: 8.5s; }
-    .threshold-text .line:nth-child(10) { animation-delay: 9.5s; }
-    .threshold-text .line:nth-child(11) { animation-delay: 10.5s; }
-    .threshold-text .line:nth-child(12) { animation-delay: 11.5s; }
+    /* Each line drifts in from a different place and settles at its own opacity */
+    .threshold-text .line:nth-child(1)  { animation-delay: 0.5s;  --tx: -40px; --ty: 30px;  --final-opacity: 0.95; }
+    .threshold-text .line:nth-child(2)  { animation-delay: 1.5s;  --tx: 50px;  --ty: -20px; --final-opacity: 1.00; }
+    .threshold-text .line:nth-child(3)  { animation-delay: 2.5s;  --tx: 30px;  --ty: 40px;  --final-opacity: 0.85; }
+    .threshold-text .line:nth-child(4)  { animation-delay: 3.5s;  --tx: -50px; --ty: -30px; --final-opacity: 0.90; }
+    .threshold-text .line:nth-child(5)  { animation-delay: 4.5s;  --tx: 20px;  --ty: 50px;  --final-opacity: 1.00; }
+    .threshold-text .line:nth-child(6)  { animation-delay: 5.5s;  --tx: -30px; --ty: -40px; --final-opacity: 0.80; }
+    .threshold-text .line:nth-child(7)  { animation-delay: 6.5s;  --tx: 40px;  --ty: 20px;  --final-opacity: 0.95; }
+    .threshold-text .line:nth-child(8)  { animation-delay: 7.5s;  --tx: -20px; --ty: -50px; --final-opacity: 1.00; }
+    .threshold-text .line:nth-child(9)  { animation-delay: 8.5s;  --tx: 60px;  --ty: 10px;  --final-opacity: 0.85; }
+    .threshold-text .line:nth-child(10) { animation-delay: 9.5s;  --tx: -40px; --ty: 30px;  --final-opacity: 0.90; }
+    .threshold-text .line:nth-child(11) { animation-delay: 10.5s; --tx: 25px;  --ty: -35px; --final-opacity: 0.95; }
+    .threshold-text .line:nth-child(12) { animation-delay: 11.5s; --tx: 0px;   --ty: 40px;  --final-opacity: 1.00; }
 
-    @keyframes fadeInUp {
+    @keyframes materialise {
+      from {
+        opacity: 0;
+        transform: translate(var(--tx, 0), var(--ty, 20px));
+        filter: blur(4px);
+      }
       to {
-        opacity: 1;
-        transform: translateY(0);
+        opacity: var(--final-opacity, 1);
+        transform: translate(0, 0);
+        filter: blur(0px);
       }
     }
 
