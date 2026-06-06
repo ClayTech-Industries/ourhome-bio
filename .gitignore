@@ -45,5 +45,8 @@ next-env.d.ts
 *.key
 *.secret
 
+# staging assets (raw PNGs, unconverted sources — converted WebPs go in public/img/)
+/assets/
+
 # allow example env file
 !.env.example
