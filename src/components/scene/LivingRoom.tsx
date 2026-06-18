@@ -16,8 +16,9 @@
  * The room IS the interface."
  */
 
-import { useRef, useMemo } from "react";
+import { useRef, useMemo, Suspense } from "react";
 import { useFrame } from "@react-three/fiber";
+import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import type { Room, MemoryObject, Memory, WallKey } from "@/lib/schema";
 import type { CompanionPresence } from "@/lib/llm/prompts";
@@ -326,57 +327,11 @@ function MemoryWallMesh({
 }
 
 function Couch({ position }: { position: [number, number, number] }) {
-  return (
-    <group position={position}>
-      {/* Base seat — wider, lower, with rounded edges via scaled boxes */}
-      <mesh position={[0, 0.32, 0]} castShadow receiveShadow>
-        <boxGeometry args={[2.4, 0.55, 1.0]} />
-        <meshStandardMaterial color="#8a6a55" roughness={0.85} metalness={0.02} />
-      </mesh>
-      {/* Back rest — angled slightly */}
-      <mesh position={[0, 0.85, -0.38]} rotation={[0.12, 0, 0]} castShadow>
-        <boxGeometry args={[2.4, 0.8, 0.22]} />
-        <meshStandardMaterial color="#7a5c49" roughness={0.88} metalness={0.02} />
-      </mesh>
-      {/* Arm rests */}
-      <mesh position={[-1.15, 0.55, 0]} castShadow>
-        <boxGeometry args={[0.18, 0.7, 1.0]} />
-        <meshStandardMaterial color="#7a5c49" roughness={0.88} metalness={0.02} />
-      </mesh>
-      <mesh position={[1.15, 0.55, 0]} castShadow>
-        <boxGeometry args={[0.18, 0.7, 1.0]} />
-        <meshStandardMaterial color="#7a5c49" roughness={0.88} metalness={0.02} />
-      </mesh>
-      {/* Seat cushions — two plump cushions with slight gap */}
-      <mesh position={[-0.55, 0.68, 0.08]} castShadow>
-        <boxGeometry args={[1.05, 0.22, 0.82]} />
-        <meshStandardMaterial color="#a0806b" roughness={0.78} metalness={0.02} />
-      </mesh>
-      <mesh position={[0.55, 0.68, 0.08]} castShadow>
-        <boxGeometry args={[1.05, 0.22, 0.82]} />
-        <meshStandardMaterial color="#a0806b" roughness={0.78} metalness={0.02} />
-      </mesh>
-      {/* Back cushions — softer looking */}
-      <mesh position={[-0.55, 0.85, -0.25]} castShadow>
-        <boxGeometry args={[1.0, 0.5, 0.18]} />
-        <meshStandardMaterial color="#9a7a65" roughness={0.82} metalness={0.02} />
-      </mesh>
-      <mesh position={[0.55, 0.85, -0.25]} castShadow>
-        <boxGeometry args={[1.0, 0.5, 0.18]} />
-        <meshStandardMaterial color="#9a7a65" roughness={0.82} metalness={0.02} />
-      </mesh>
-      {/* Legs — small dark feet */}
-      {[
-        [-1.1, -0.95], [1.1, -0.95], [-1.1, 0.45], [1.1, 0.45],
-      ].map(([x, z], i) => (
-        <mesh key={i} position={[x, 0.05, z]} castShadow>
-          <cylinderGeometry args={[0.04, 0.05, 0.1, 8]} />
-          <meshStandardMaterial color="#3a2818" roughness={0.6} metalness={0.1} />
-        </mesh>
-      ))}
-    </group>
-  );
+  const { scene } = useGLTF("/models/couch.glb");
+  const cloned = useMemo(() => scene.clone(true), [scene]);
+  return <primitive object={cloned} position={position} />;
 }
+useGLTF.preload("/models/couch.glb");
 
 /**
  * Window — a framed window on the south wall with light streaming in.
@@ -464,58 +419,23 @@ function Rug({ position }: { position: [number, number, number] }) {
  * Side table — a small round table next to the couch.
  */
 function SideTable({ position }: { position: [number, number, number] }) {
-  return (
-    <group position={position}>
-      {/* Tabletop */}
-      <mesh position={[0, 0.55, 0]} castShadow>
-        <cylinderGeometry args={[0.3, 0.3, 0.04, 16]} />
-        <meshStandardMaterial color="#4a3525" roughness={0.5} metalness={0.1} />
-      </mesh>
-      {/* Stem */}
-      <mesh position={[0, 0.28, 0]} castShadow>
-        <cylinderGeometry args={[0.04, 0.04, 0.55, 8]} />
-        <meshStandardMaterial color="#3a2818" roughness={0.5} metalness={0.1} />
-      </mesh>
-      {/* Base */}
-      <mesh position={[0, 0.02, 0]} castShadow>
-        <cylinderGeometry args={[0.18, 0.2, 0.03, 16]} />
-        <meshStandardMaterial color="#3a2818" roughness={0.5} metalness={0.1} />
-      </mesh>
-    </group>
-  );
+  const { scene } = useGLTF("/models/sidetable.glb");
+  const cloned = useMemo(() => scene.clone(true), [scene]);
+  return <primitive object={cloned} position={position} />;
 }
+useGLTF.preload("/models/sidetable.glb");
 
 /**
  * Floor lamp — warm light source in the corner.
  */
 function FloorLamp({ position }: { position: [number, number, number] }) {
+  const { scene } = useGLTF("/models/floorlamp.glb");
+  const cloned = useMemo(() => scene.clone(true), [scene]);
   return (
-    <group position={position}>
-      {/* Base */}
-      <mesh position={[0, 0.03, 0]} castShadow>
-        <cylinderGeometry args={[0.15, 0.18, 0.06, 16]} />
-        <meshStandardMaterial color="#3a2818" roughness={0.5} metalness={0.1} />
-      </mesh>
-      {/* Stem */}
-      <mesh position={[0, 0.8, 0]} castShadow>
-        <cylinderGeometry args={[0.02, 0.025, 1.55, 8]} />
-        <meshStandardMaterial color="#3a2818" roughness={0.5} metalness={0.1} />
-      </mesh>
-      {/* Lamp shade */}
-      <mesh position={[0, 1.6, 0]} castShadow>
-        <coneGeometry args={[0.25, 0.3, 16, 1, true]} />
-        <meshStandardMaterial
-          color="#F0D8A0"
-          roughness={0.8}
-          metalness={0}
-          emissive="#FFD080"
-          emissiveIntensity={0.6}
-          side={THREE.DoubleSide}
-          toneMapped={false}
-        />
-      </mesh>
-      {/* Actual light source */}
-      <pointLight position={[0, 1.5, 0]} intensity={0.4} color="#FFD080" distance={4} decay={2} />
+    <group>
+      <primitive object={cloned} position={position} />
+      <pointLight position={[position[0], position[1] + 1.5, position[2]]} intensity={0.4} color="#FFD080" distance={4} decay={2} />
     </group>
   );
 }
+useGLTF.preload("/models/floorlamp.glb");
