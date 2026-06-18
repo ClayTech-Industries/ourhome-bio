@@ -186,14 +186,15 @@ async function insertMemoryObject(
 export function placeFrameOnWall(existingCount: number): {
   position: { x: number; y: number; z: number };
 } {
-  // Wall is 6 wide x 2.8 tall, from x=-3..3, y=0.5..3.3, z = +3 (east)
+  // East wall is at x = +3 (ROOM_W/2). Frames face -x (toward viewer).
+  // Spread across z (-2.2..2.2) and y (1.4..2.9) in a grid.
   const col = existingCount % 5;
   const row = Math.floor(existingCount / 5);
   return {
     position: {
-      x: -2.2 + col * 1.1,
+      x: 2.99,  // east wall
       y: 2.4 - row * 0.95,
-      z: 2.99,
+      z: -2.2 + col * 1.1,  // spread across the wall horizontally
     },
   };
 }

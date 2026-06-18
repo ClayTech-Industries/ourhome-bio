@@ -134,10 +134,10 @@ export function computeMemoryGlowCenter(
     return { pos: [0.5, 0.5], radius: 0.3 };
   }
 
-  // Memory frames are on the east wall (x = ROOM_W/2, z varies)
-  // UV: x maps to z position, y maps to y position
+  // Memory frames are on the east wall (x = +3)
+  // UV: z maps to u position, y maps to v position
   // For east wall at x=3, frames at z=-2.2..2.2, y=0.5..3.3
-  // UV.x = (z + 3) / 6, UV.y = (y) / 3.2
+  // UV.u = (z + 3) / 6, UV.v = (y) / 3.2
 
   const positions = memoryObjects.map((o) => ({
     u: (o.position.z + 3) / 6,

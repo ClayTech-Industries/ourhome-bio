@@ -275,14 +275,14 @@ export function captureMemory(input: CaptureInput): { memory: Memory; object: Me
   };
 
   // Place the frame on the east wall (Memory Wall) in a grid.
-  // Wall is 6 wide x 2.8 tall, from x=-3..3, y=0.5..3.3, z = +3 (east).
+  // East wall is at x = +3. Frames spread across z and y.
   const existingOnWall = state.memoryObjects.length;
   const col = existingOnWall % 5;
   const row = Math.floor(existingOnWall / 5);
   const position = {
-    x: -2.2 + col * 1.1,
+    x: 2.99,
     y: 2.4 - row * 0.95,
-    z: 2.99,
+    z: -2.2 + col * 1.1,
   };
 
   const object: MemoryObject = {
