@@ -16,7 +16,7 @@
  * The room IS the interface."
  */
 
-import { useRef } from "react";
+import { useRef, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import type { Room, MemoryObject, Memory, WallKey } from "@/lib/schema";
@@ -26,6 +26,12 @@ import { presenceToEnvironment } from "./presence-utils";
 import { WallShader } from "./WallShader";
 import { computeWallPatina, getGhostLayers, computeMemoryGlowCenter } from "@/lib/patina/wall-patina";
 import { getRoomLighting } from "@/lib/scene/lighting";
+import {
+  createPlasterTexture,
+  createWoodFloorTexture,
+  createWallRoughnessTexture,
+  createWoodRoughnessTexture,
+} from "./procedural-textures";
 
 interface LivingRoomProps {
   room: Room;
@@ -73,6 +79,12 @@ export function LivingRoom({
   // Memory glow center for east wall
   const glowCenter = computeMemoryGlowCenter(memoryObjects);
 
+  // Procedural textures (Sprint 2 rendering upgrade)
+  const floorTexture = useMemo(() => createWoodFloorTexture(), []);
+  const floorRoughness = useMemo(() => createWoodRoughnessTexture(), []);
+  const ceilingTexture = useMemo(() => createPlasterTexture("#F4E9D8", { variation: 0.02, grain: 0.01 }), []);
+  const ceilingRoughness = useMemo(() => createWallRoughnessTexture(), []);
+
   // Refs for lerp-able values
   const ambientRef = useRef<THREE.AmbientLight>(null);
   const dirRef = useRef<THREE.DirectionalLight>(null);
@@ -116,20 +128,30 @@ export function LivingRoom({
         distance={10}
       />
 
-      {/* Floor */}
+      {/* Floor — wood planks with PBR texture */}
       <mesh
         rotation={[-Math.PI / 2, 0, 0]}
         position={[0, 0, 0]}
         receiveShadow
       >
         <planeGeometry args={[ROOM_W, ROOM_D]} />
-        <meshStandardMaterial color={floorColor} roughness={0.85} />
+        <meshStandardMaterial
+          map={floorTexture}
+          roughnessMap={floorRoughness}
+          roughness={0.75}
+          metalness={0.05}
+        />
       </mesh>
 
-      {/* Ceiling */}
+      {/* Ceiling — plaster with subtle texture */}
       <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, ROOM_H, 0]}>
         <planeGeometry args={[ROOM_W, ROOM_D]} />
-        <meshStandardMaterial color="#F4E9D8" roughness={1} />
+        <meshStandardMaterial
+          map={ceilingTexture}
+          roughnessMap={ceilingRoughness}
+          roughness={0.9}
+          metalness={0}
+        />
       </mesh>
 
       {/* North wall (back) — with patina and ghost layers */}
@@ -297,21 +319,21 @@ function Couch({ position }: { position: [number, number, number] }) {
       {/* base */}
       <mesh position={[0, 0.35, 0]} castShadow receiveShadow>
         <boxGeometry args={[2.4, 0.7, 1.0]} />
-        <meshStandardMaterial color="#8a6a55" roughness={0.9} />
+        <meshStandardMaterial color="#8a6a55" roughness={0.85} metalness={0.02} />
       </mesh>
       {/* back */}
       <mesh position={[0, 0.95, -0.4]} castShadow>
         <boxGeometry args={[2.4, 0.9, 0.25]} />
-        <meshStandardMaterial color="#7a5c49" roughness={0.9} />
+        <meshStandardMaterial color="#7a5c49" roughness={0.88} metalness={0.02} />
       </mesh>
-      {/* cushion highlights */}
-      <mesh position={[-0.6, 0.72, 0.05]}>
+      {/* cushion highlights — slightly different color for depth */}
+      <mesh position={[-0.6, 0.72, 0.05]} castShadow>
         <boxGeometry args={[1.0, 0.18, 0.85]} />
-        <meshStandardMaterial color="#a0806b" roughness={0.85} />
+        <meshStandardMaterial color="#a0806b" roughness={0.82} metalness={0.02} />
       </mesh>
-      <mesh position={[0.6, 0.72, 0.05]}>
+      <mesh position={[0.6, 0.72, 0.05]} castShadow>
         <boxGeometry args={[1.0, 0.18, 0.85]} />
-        <meshStandardMaterial color="#a0806b" roughness={0.85} />
+        <meshStandardMaterial color="#a0806b" roughness={0.82} metalness={0.02} />
       </mesh>
     </group>
   );
