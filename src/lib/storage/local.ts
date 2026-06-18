@@ -103,6 +103,30 @@ export function subscribe(listener: () => void): () => void {
   };
 }
 
+/**
+ * Replace the entire local state with cloud-downloaded state.
+ * Called when a returning user logs in and cloud state wins.
+ * Dispatches ourhome:state-changed so all subscribers refresh.
+ */
+export function replaceStateFromCloud(cloud: {
+  home: Home;
+  rooms: Room[];
+  memories: Memory[];
+  objects: MemoryObject[];
+}): void {
+  if (typeof window === "undefined") return;
+  const state: StoredState = {
+    home: cloud.home,
+    rooms: cloud.rooms,
+    memories: cloud.memories,
+    memoryObjects: cloud.objects,
+    conversation: read().conversation, // preserve local conversation history
+    undoStack: [], // fresh undo stack for cloud state
+    currentRoomSlug: cloud.rooms[0]?.slug ?? "living_room",
+  };
+  write(state);
+}
+
 // -----------------------------------------------------------------
 // Home bootstrap
 // -----------------------------------------------------------------

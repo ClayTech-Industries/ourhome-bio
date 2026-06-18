@@ -1,6 +1,19 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 
+/**
+ * OAuth callback route.
+ *
+ * After Supabase exchanges the code for a session, we:
+ *   1. Get the authenticated user
+ *   2. Check if they already have a cloud home (userHasCloudHome)
+ *   3. If no cloud home → bootstrap from localStorage state
+ *   4. If cloud home exists → redirect to home (client will download cloud state)
+ *
+ * The bootstrap runs server-side using the service-role client.
+ * The client-side HomeExperience handles localStorage → cloud sync
+ * and cloud → localStorage download on auth state change.
+ */
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
@@ -45,6 +58,30 @@ export async function GET(request: Request) {
     return NextResponse.redirect(
       `${origin}/login?error=${encodeURIComponent(error.message)}`
     );
+  }
+
+  // Get the authenticated user
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (user) {
+    // Check if user already has a cloud home
+    try {
+      const { userHasCloudHome, bootstrapNewHome } = await import("@/lib/auth/bootstrap");
+      const hasHome = await userHasCloudHome(user.id);
+
+      if (!hasHome) {
+        // No cloud home yet — this is a first-time user
+        // The client-side HomeExperience will detect auth state change
+        // and trigger the bootstrap from localStorage.
+        // We pass a flag via the redirect URL so the client knows to bootstrap.
+        const bootstrapUrl = new URL(`${origin}${next}`);
+        bootstrapUrl.searchParams.set("bootstrap", "true");
+        return NextResponse.redirect(bootstrapUrl.toString());
+      }
+    } catch (bootstrapError) {
+      // Bootstrap check failed — not fatal, user can still use the app
+      console.error("Bootstrap check failed:", bootstrapError);
+    }
   }
 
   return response;

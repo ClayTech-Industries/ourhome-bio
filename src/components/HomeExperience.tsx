@@ -63,6 +63,26 @@ export function HomeExperience() {
   // Subscribe to localStorage changes
   useEffect(() => subscribe(() => setTick((t) => t + 1)), []);
 
+  // Listen for cloud state downloads (triggered by auth bootstrap)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.home) {
+        import("@/lib/storage/local").then(({ replaceStateFromCloud }) => {
+          replaceStateFromCloud({
+            home: detail.home,
+            rooms: detail.rooms ?? [],
+            memories: detail.memories ?? [],
+            objects: detail.objects ?? [],
+          });
+          setTick((t) => t + 1);
+        });
+      }
+    };
+    window.addEventListener("ourhome:cloud-state", handler);
+    return () => window.removeEventListener("ourhome:cloud-state", handler);
+  }, []);
+
   // Check Supabase auth state
   useEffect(() => {
     if (!supabase) {
@@ -88,7 +108,7 @@ export function HomeExperience() {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      async (event, session) => {
         if (session?.user) {
           setUser({
             id: session.user.id,
@@ -99,6 +119,54 @@ export function HomeExperience() {
             createdAt: session.user.created_at,
             lastLogin: new Date().toISOString(),
           });
+
+          // Auth bootstrap: sync localStorage → cloud on first login
+          // or download cloud state for returning users
+          try {
+            const { userHasCloudHome, bootstrapNewHome, downloadCloudState } =
+              await import("@/lib/auth/bootstrap");
+            const { uploadState } = await import("@/lib/storage/sync");
+
+            const hasCloudHome = await userHasCloudHome(session.user.id);
+            const localHome = getHome();
+
+            if (!hasCloudHome && localHome) {
+              // First-time login: push localStorage to cloud
+              const localRooms = getRooms();
+              const localMemories = getMemories();
+              const localObjects = getMemoryObjects();
+
+              const result = await bootstrapNewHome(
+                session.user.id,
+                localHome,
+                localRooms,
+                localMemories,
+                localObjects,
+              );
+
+              if (result.created) {
+                console.log("[OurHome] Bootstrapped home to cloud:", result.homeId);
+              } else if (result.error) {
+                console.warn("[OurHome] Bootstrap error:", result.error);
+              }
+            } else if (hasCloudHome) {
+              // Returning user: download cloud state
+              const cloudState = await downloadCloudState(session.user.id);
+              if (cloudState.home && !cloudState.error) {
+                // Cloud wins — replace localStorage with cloud state
+                // This ensures the user sees their cloud home on any device
+                console.log("[OurHome] Downloaded cloud state for returning user");
+                // The actual localStorage replacement happens via a custom event
+                // that the storage module listens for
+                window.dispatchEvent(new CustomEvent("ourhome:cloud-state", {
+                  detail: cloudState,
+                }));
+              }
+            }
+          } catch (syncError) {
+            // Auth sync failed — not fatal, user continues with localStorage
+            console.warn("[OurHome] Auth sync failed:", syncError);
+          }
         } else {
           setUser(null);
         }
