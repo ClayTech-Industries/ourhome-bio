@@ -338,7 +338,60 @@ export async function POST(request: NextRequest) {
                 const args = block.input as Record<string, unknown>;
 
                 if (block.name === "capture_memory") {
+                  // Phase 1: Fast bloom — emit capture event immediately
+                  // The client blooms a frame on the Memory Wall right away
                   controller.enqueue(encoder.encode(sseEvent("capture", { args })));
+
+                  // Phase 2: Confirmed write — server-side canonical write
+                  // R2 markdown (canonical) + Postgres index + optional embedding
+                  try {
+                    const { captureMemory } = await import("@/lib/memory/capture");
+                    const { CaptureMemoryArgsSchema } = await import("@/lib/schema");
+
+                    // Validate args
+                    const captureArgs = CaptureMemoryArgsSchema.parse({
+                      type: args.type,
+                      title: args.title,
+                      body: args.body,
+                      roomSlug: args.roomSlug ?? room.slug,
+                      emotionalValence: args.emotionalValence ?? 0,
+                      importance: args.importance ?? 0.5,
+                      tags: args.tags ?? [],
+                    });
+
+                    // TODO: ownerId and homeId should come from auth session
+                    // For Sprint 1 local mode, use placeholder IDs
+                    const ownerId = process.env.OURHOME_OWNER_ID ?? "local-user";
+                    const homeId = process.env.OURHOME_HOME_ID ?? "local-home";
+                    const roomId = room.id;
+
+                    const result = await captureMemory(
+                      captureArgs,
+                      companion,
+                      ownerId,
+                      homeId,
+                      roomId,
+                      recentMemories.length, // existing frame count for placement
+                    );
+
+                    if (result.confirmed) {
+                      controller.enqueue(encoder.encode(sseEvent("capture_confirmed", {
+                        memoryId: result.memory.id,
+                        r2Key: result.r2Key,
+                        embedding: result.embeddingGenerated,
+                      })));
+                    } else {
+                      controller.enqueue(encoder.encode(sseEvent("capture_failed", {
+                        memoryId: result.memory.id,
+                        error: result.error,
+                      })));
+                    }
+                  } catch (captureError) {
+                    console.error("Memory capture failed:", captureError);
+                    controller.enqueue(encoder.encode(sseEvent("capture_failed", {
+                      error: captureError instanceof Error ? captureError.message : "Capture failed",
+                    })));
+                  }
                 } else if (block.name === "change_wall_color") {
                   controller.enqueue(encoder.encode(sseEvent("wall_color", { args })));
                 } else if (block.name === "undo_last_change") {

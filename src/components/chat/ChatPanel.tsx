@@ -176,6 +176,17 @@ export function ChatPanel({
                 if (data.args) {
                   onCapture(data.args);
                 }
+              } else if (eventType === "capture_confirmed") {
+                // Phase 2 complete: memory written to R2 (canonical)
+                // The frame is now permanent — settled, not just bloomed
+                const data = JSON.parse(eventData);
+                // Log for debugging; client can optionally animate frame settling
+                console.log("[OurHome] Memory confirmed:", data.memoryId, data.r2Key);
+              } else if (eventType === "capture_failed") {
+                // Phase 2 failed: R2 write failed, memory not permanent
+                // The bloomed frame should fade — it didn't settle
+                const data = JSON.parse(eventData);
+                console.error("[OurHome] Memory capture failed:", data.error);
               } else if (eventType === "wall_color") {
                 const data = JSON.parse(eventData);
                 if (data.args) {
