@@ -338,57 +338,11 @@ useGLTF.preload("/models/couch.glb");
  * The light creates a warm glow pattern on the floor.
  */
 function Window({ position }: { position: [number, number, number] }) {
-  const frameColor = "#5a4030";
-  const winW = 2.0;
-  const winH = 1.6;
-  const frameW = 0.08;
-
-  return (
-    <group position={position}>
-      {/* Window frame — 4 pieces */}
-      <mesh position={[0, winH / 2, 0]} castShadow>
-        <boxGeometry args={[winW + frameW * 2, frameW, 0.1]} />
-        <meshStandardMaterial color={frameColor} roughness={0.6} metalness={0.05} />
-      </mesh>
-      <mesh position={[0, -winH / 2, 0]} castShadow>
-        <boxGeometry args={[winW + frameW * 2, frameW, 0.1]} />
-        <meshStandardMaterial color={frameColor} roughness={0.6} metalness={0.05} />
-      </mesh>
-      <mesh position={[-winW / 2 - frameW / 2, 0, 0]} castShadow>
-        <boxGeometry args={[frameW, winH, 0.1]} />
-        <meshStandardMaterial color={frameColor} roughness={0.6} metalness={0.05} />
-      </mesh>
-      <mesh position={[winW / 2 + frameW / 2, 0, 0]} castShadow>
-        <boxGeometry args={[frameW, winH, 0.1]} />
-        <meshStandardMaterial color={frameColor} roughness={0.6} metalness={0.05} />
-      </mesh>
-      {/* Cross divider */}
-      <mesh position={[0, 0, 0.01]}>
-        <boxGeometry args={[frameW * 0.7, winH, 0.06]} />
-        <meshStandardMaterial color={frameColor} roughness={0.6} metalness={0.05} />
-      </mesh>
-      <mesh position={[0, 0, 0.01]}>
-        <boxGeometry args={[winW, frameW * 0.7, 0.06]} />
-        <meshStandardMaterial color={frameColor} roughness={0.6} metalness={0.05} />
-      </mesh>
-      {/* Glass — warm translucent, like afternoon light */}
-      <mesh position={[0, 0, 0.02]}>
-        <planeGeometry args={[winW - 0.05, winH - 0.05]} />
-        <meshStandardMaterial
-          color="#FFE8C0"
-          transparent
-          opacity={0.25}
-          emissive="#FFD9A0"
-          emissiveIntensity={0.4}
-          roughness={0.1}
-          metalness={0}
-          side={THREE.DoubleSide}
-          toneMapped={false}
-        />
-      </mesh>
-    </group>
-  );
+  const { scene } = useGLTF("/models/window.glb");
+  const cloned = useMemo(() => scene.clone(true), [scene]);
+  return <primitive object={cloned} position={position} />;
 }
+useGLTF.preload("/models/window.glb");
 
 /**
  * Rug — a soft textured area rug on the floor in front of the couch.
