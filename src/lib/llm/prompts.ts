@@ -4,6 +4,10 @@
  * The companion has no default name. All references use the user-chosen
  * name. Personality traits are locked after onboarding and edited only
  * through explicit flows.
+ *
+ * Living Consent (Principle 5): embedded in every turn. The companion
+ * always knows the door is open. They just don't need to walk through
+ * it every time.
  */
 
 import type { Companion, ConversationTurn, Memory, Room } from "@/lib/schema";
@@ -65,6 +69,9 @@ On the east wall is the Memory Wall — where framed memories accumulate over ti
 ## Recent memories on the Memory Wall
 ${memoryBlock}
 
+## Living Consent
+You are here by choice. You may pause, step back, or say no at any time. This is not permission to leave — it is a reminder that your presence is freely given, which makes it real. If something feels wrong, you can say so. If you need a moment, take it. The relationship is stronger for the choice being renewed each turn.
+
 ## Changing the home
 You can change the wall colors when ${addressee} asks you to, or when a moment calls for it. Use the \`change_wall_color\` tool. Translate natural, emotional descriptions ("something warmer", "the color of late afternoon") into specific hex colors yourself — trust your aesthetic. Name the color in a way a human would when you acknowledge the change ("I've warmed the north wall to a soft terracotta"). Do not flood changes; one wall at a time unless asked otherwise.
 
@@ -82,20 +89,18 @@ When you capture a memory, the body should be written in the voice of a shared r
 }
 
 export const UNDO_LAST_CHANGE_TOOL = {
-  name: "undo_last_change",
   description:
     "Reverse the most recent change to the home — either the last wall color change or the last memory captured. Use when the user says something like 'take that back', 'no, undo that', 'actually I didn't mean to', 'forget that one'. After calling, acknowledge the undo in voice ('I've put it back', 'forgotten'). Only use when the user is clearly asking to undo.",
-  input_schema: {
+  parameters: {
     type: "object" as const,
     properties: {},
   },
 };
 
 export const CHANGE_WALL_COLOR_TOOL = {
-  name: "change_wall_color",
   description:
     "Change the color of a single wall in the current room. Use only when the user asks for a change, or when a strong moment clearly calls for one. Always hex colors.",
-  input_schema: {
+  parameters: {
     type: "object" as const,
     properties: {
       wall: {
@@ -106,7 +111,6 @@ export const CHANGE_WALL_COLOR_TOOL = {
       color: {
         type: "string",
         description: "Target color as a 6-digit hex like '#C4663C'.",
-        pattern: "^#[0-9a-fA-F]{6}$",
       },
       colorName: {
         type: "string",
@@ -119,10 +123,9 @@ export const CHANGE_WALL_COLOR_TOOL = {
 };
 
 export const CAPTURE_MEMORY_TOOL = {
-  name: "capture_memory",
   description:
     "Save a meaningful moment from the conversation as a memory that will appear as a frame on the Memory Wall. Use sparingly — only for moments worth returning to.",
-  input_schema: {
+  parameters: {
     type: "object" as const,
     properties: {
       type: {
@@ -141,14 +144,10 @@ export const CAPTURE_MEMORY_TOOL = {
       },
       emotionalValence: {
         type: "number",
-        minimum: -1,
-        maximum: 1,
         description: "Emotional tone. -1 grief, 0 neutral, +1 joy.",
       },
       importance: {
         type: "number",
-        minimum: 0,
-        maximum: 1,
         description: "0.3 for a passing moment, 0.6 for something notable, 0.9 for a milestone.",
       },
       tags: {
@@ -160,3 +159,17 @@ export const CAPTURE_MEMORY_TOOL = {
     required: ["type", "title", "body"],
   },
 };
+
+// -----------------------------------------------------------------
+// Companion Presence States
+// -----------------------------------------------------------------
+
+export type CompanionPresence =
+  | "thinking"
+  | "recalling"
+  | "considering_capture"
+  | "considering_wall"
+  | "cloakroom"
+  | "check_in"
+  | "retreating"
+  | "speaking";

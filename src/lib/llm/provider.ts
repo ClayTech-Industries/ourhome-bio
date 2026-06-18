@@ -4,10 +4,15 @@
  * This module defines a unified interface for LLM providers, allowing
  * OurHome to swap between Claude, OpenAI, Ollama, xAI, etc. without
  * rewriting the memory engine or streaming pipeline.
+ *
+ * Architecture (per BUILD_PLAN Priority 2):
+ *   - General chat: AI SDK v6 (provider-agnostic, swappable)
+ *   - Cloakroom/Observer: Direct API (transparent, no abstraction)
+ *   - The Router decides which path; for Sprint 1 we go straight through
  */
 
 import { anthropic } from "@ai-sdk/anthropic";
-import { openai } from "@ai-sdk/openai";
+import { createOpenAI } from "@ai-sdk/openai";
 import { streamText, generateText } from "ai";
 
 // -----------------------------------------------------------------
@@ -34,32 +39,47 @@ export interface LLMResponse {
   usage?: { promptTokens: number; completionTokens: number };
 }
 
+export interface ResolvedProvider {
+  client: ReturnType<typeof anthropic> | ReturnType<typeof createOpenAI>;
+  defaultModel: string;
+}
+
 // -----------------------------------------------------------------
 // Provider Registry
 // -----------------------------------------------------------------
 
-function getProvider(config: LLMConfig) {
+function getProvider(config: LLMConfig): ResolvedProvider {
   switch (config.provider) {
     case "anthropic":
       return {
         client: anthropic,
-        defaultModel: config.model || "claude-sonnet-4-20250514",
+        defaultModel: config.model || "claude-sonnet-4-5-20250929",
       };
-    case "openai":
+    case "openai": {
+      const openaiClient = createOpenAI();
       return {
-        client: openai,
+        client: openaiClient,
         defaultModel: config.model || "gpt-4o-mini",
       };
-    case "ollama":
+    }
+    case "ollama": {
+      // Ollama exposes an OpenAI-compatible API at the configured base URL
+      const ollamaBaseUrl = config.baseUrl || process.env.LLM_BASE_URL || "http://localhost:11434/v1";
+      const ollama = createOpenAI({ baseURL: ollamaBaseUrl });
       return {
-        client: openai,
+        client: ollama,
         defaultModel: config.model || "llama3.1",
       };
-    case "custom":
+    }
+    case "custom": {
+      const customBaseUrl = config.baseUrl || process.env.LLM_BASE_URL;
+      if (!customBaseUrl) throw new Error("LLM_BASE_URL required for custom provider");
+      const custom = createOpenAI({ baseURL: customBaseUrl });
       return {
-        client: openai,
+        client: custom,
         defaultModel: config.model || "custom-model",
       };
+    }
     default:
       throw new Error(`Unknown provider: ${(config as LLMConfig).provider}`);
   }
@@ -77,7 +97,18 @@ export class LLMProvider {
   }
 
   /**
+   * Resolve the provider to get direct access to the AI SDK model factory
+   * and default model name. Used by route handlers that need fine-grained
+   * control over streaming (SSE events, presence states, tool calls).
+   */
+  resolveProvider(): ResolvedProvider {
+    return getProvider(this.config);
+  }
+
+  /**
    * Stream a chat completion with tool calling support.
+   * Legacy API — prefer using resolveProvider() + streamText() directly
+   * for full control over SSE event formatting.
    */
   async streamChat(options: {
     messages: any[];

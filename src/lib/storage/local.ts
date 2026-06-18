@@ -193,9 +193,16 @@ export function resetHome(): void {
 // Conversation log
 // -----------------------------------------------------------------
 
-export function appendTurn(role: "user" | "companion", content: string): void {
+export interface StoredTurn {
+  role: "user" | "companion";
+  content: string;
+  at: string;
+  silent?: boolean; // silent turns are UI actions (recall, frame clicks), not real speech
+}
+
+export function appendTurn(role: "user" | "companion", content: string, silent?: boolean): void {
   const state = read();
-  state.conversation.push({ role, content, at: new Date().toISOString() });
+  state.conversation.push({ role, content, at: new Date().toISOString(), silent });
   if (state.conversation.length > 200) {
     state.conversation = state.conversation.slice(-200);
   }

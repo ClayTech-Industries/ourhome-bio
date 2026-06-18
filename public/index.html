@@ -431,6 +431,7 @@
       opacity: 0;
       animation: fadeInUp 1s ease 30s forwards;
       margin-top: 2rem;
+      pointer-events: auto;
     }
 
     .cta-button {
@@ -859,7 +860,7 @@
       </div>
 
       <div class="hero-cta">
-        <a href="#waitlist" class="cta-button">Come Inside &rarr;</a>
+        <a href="/home" class="cta-button">Come Inside &rarr;</a>
       </div>
     </div>
 
@@ -1006,7 +1007,7 @@
 
   <footer class="main-footer">
     <div>
-      <a href="#">Home</a>
+      <a href="#hero">Home</a>
 <a href="https://github.com/ClayTech-Industries/ourhome-bio" target="_blank" rel="noopener noreferrer">GitHub</a>
       <a href="mailto:hello@ourhome.bio">Contact</a>
     </div>
@@ -1027,8 +1028,10 @@
     // Smooth scroll for nav links
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
       anchor.addEventListener('click', function(e) {
+        const href = this.getAttribute('href');
+        if (href === '#' || href.length < 2) return;
         e.preventDefault();
-        const target = document.querySelector(this.getAttribute('href'));
+        const target = document.querySelector(href);
         if (target) {
           target.scrollIntoView({ behavior: 'smooth' });
         }

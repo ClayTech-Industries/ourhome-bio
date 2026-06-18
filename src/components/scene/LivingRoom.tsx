@@ -6,14 +6,23 @@
  * A simple stylized interior: four walls, a floor, soft warm light,
  * and a Memory Wall on the east side where frames accumulate.
  *
- * Rendered inside a <Canvas> (see SceneCanvas).
+ * Companion presence states are rendered as environmental changes:
+ *   - thinking: light dims slightly, room settles — the house breathes
+ *   - recalling: a Memory Frame glows — the companion is looking at it
+ *   - considering_capture: warmth spreads on the Memory Wall
+ *   - speaking: light returns to normal
+ *
+ * Per Principle 3: "No loading spinners. No 'typing...' indicators.
+ * The room IS the interface."
  */
 
 import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import type { Room, MemoryObject, Memory } from "@/lib/schema";
+import type { CompanionPresence } from "@/lib/llm/prompts";
 import { MemoryFrame } from "./MemoryFrame";
+import { presenceToEnvironment } from "./presence-utils";
 
 interface LivingRoomProps {
   room: Room;
@@ -22,6 +31,7 @@ interface LivingRoomProps {
   onFrameClick?: (memoryId: string) => void;
   highlightedMemoryId?: string | null;
   recentlyPlacedMemoryId?: string | null;
+  presence?: CompanionPresence | null;
 }
 
 const ROOM_W = 6; // east-west
@@ -35,6 +45,7 @@ export function LivingRoom({
   onFrameClick,
   highlightedMemoryId,
   recentlyPlacedMemoryId,
+  presence,
 }: LivingRoomProps) {
   const wallColors = room.wallColors ?? {};
   const north = wallColors.north ?? "#E8D5B7";
@@ -43,22 +54,51 @@ export function LivingRoom({
   const west = wallColors.west ?? "#E8D5B7";
   const floorColor = "#6b4f3a";
 
-  const intensity = room.lighting?.intensity ?? 1;
+  const env = presenceToEnvironment(presence);
+  const baseIntensity = room.lighting?.intensity ?? 1;
+
+  // Refs for lerp-able values
+  const ambientRef = useRef<THREE.AmbientLight>(null);
+  const dirRef = useRef<THREE.DirectionalLight>(null);
+  const pointRef = useRef<THREE.PointLight>(null);
+
+  useFrame(() => {
+    // Smoothly lerp lighting toward the presence-driven target
+    if (ambientRef.current) {
+      const target = env.ambientIntensity * baseIntensity;
+      ambientRef.current.intensity += (target - ambientRef.current.intensity) * 0.04;
+    }
+    if (dirRef.current) {
+      const target = env.directionalIntensity * baseIntensity;
+      dirRef.current.intensity += (target - dirRef.current.intensity) * 0.04;
+    }
+    if (pointRef.current) {
+      const target = env.pointLightIntensity * baseIntensity;
+      pointRef.current.intensity += (target - pointRef.current.intensity) * 0.04;
+    }
+  });
 
   return (
     <group>
-      {/* Lighting — warm afternoon preset */}
-      <ambientLight intensity={0.45 * intensity} color="#FFF2DC" />
+      {/* Lighting — responsive to companion presence */}
+      <ambientLight ref={ambientRef} intensity={env.ambientIntensity * baseIntensity} color="#FFF2DC" />
       <directionalLight
+        ref={dirRef}
         position={[4, 6, 3]}
-        intensity={1.1 * intensity}
+        intensity={env.directionalIntensity * baseIntensity}
         color="#FFD9A8"
         castShadow
         shadow-mapSize-width={1024}
         shadow-mapSize-height={1024}
       />
       {/* Warm fill from window side (south) */}
-      <pointLight position={[0, 2, -2]} intensity={0.25} color="#FFC58A" distance={10} />
+      <pointLight
+        ref={pointRef}
+        position={[0, 2, -2]}
+        intensity={env.pointLightIntensity * baseIntensity}
+        color="#FFC58A"
+        distance={10}
+      />
 
       {/* Floor */}
       <mesh
@@ -95,12 +135,13 @@ export function LivingRoom({
         color={west}
       />
       {/* East wall (right) — the Memory Wall */}
-      <Wall
+      <MemoryWallMesh
         position={[ROOM_W / 2, ROOM_H / 2, 0]}
         rotationY={-Math.PI / 2}
         width={ROOM_D}
         height={ROOM_H}
         color={east}
+        warmth={env.memoryWallWarmth}
       />
 
       {/* A simple suggestion of a couch — geometric, no clutter */}
@@ -110,12 +151,14 @@ export function LivingRoom({
       {memoryObjects.map((obj) => {
         const memory = memoriesById[obj.memoryId];
         if (!memory) return null;
+        // If companion is recalling, highlight the most recent frame
+        const isRecalling = presence === "recalling" && obj === memoryObjects[memoryObjects.length - 1];
         return (
           <MemoryFrame
             key={obj.id}
             object={obj}
             memory={memory}
-            highlighted={highlightedMemoryId === memory.id}
+            highlighted={highlightedMemoryId === memory.id || isRecalling}
             justPlaced={recentlyPlacedMemoryId === memory.id}
             onClick={() => onFrameClick?.(memory.id)}
           />
@@ -152,6 +195,50 @@ function Wall({
     <mesh position={position} rotation={[0, rotationY, 0]} receiveShadow>
       <planeGeometry args={[width, height]} />
       <meshStandardMaterial ref={matRef} color={color} roughness={0.95} />
+    </mesh>
+  );
+}
+
+/**
+ * MemoryWallMesh — the east wall with warmth response.
+ * When the companion is considering capturing a memory,
+ * this wall breathes warmer.
+ */
+function MemoryWallMesh({
+  position,
+  rotationY = 0,
+  width,
+  height,
+  color,
+  warmth,
+}: {
+  position: [number, number, number];
+  rotationY?: number;
+  width: number;
+  height: number;
+  color: string;
+  warmth: number;
+}) {
+  const matRef = useRef<THREE.MeshStandardMaterial>(null);
+  const baseColor = useRef(new THREE.Color(color));
+  const warmColor = useRef(new THREE.Color("#D4A06A")); // warm amber
+  const targetColor = useRef(new THREE.Color(color));
+
+  useFrame(() => {
+    if (!matRef.current) return;
+    // Blend toward warm when companion is considering capture
+    if (warmth > 0) {
+      targetColor.current.copy(baseColor.current).lerp(warmColor.current, warmth * 0.3);
+    } else {
+      targetColor.current.copy(baseColor.current);
+    }
+    matRef.current.color.lerp(targetColor.current, 0.04);
+  });
+
+  return (
+    <mesh position={position} rotation={[0, rotationY, 0]} receiveShadow>
+      <planeGeometry args={[width, height]} />
+      <meshStandardMaterial ref={matRef} color={color} roughness={0.92} />
     </mesh>
   );
 }

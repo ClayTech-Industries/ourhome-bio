@@ -4,10 +4,16 @@
  * ChatPanel — streaming, low-chrome conversation surface.
  *
  * Consumes SSE events from /api/conversation:
+ *   - presence: companion state (thinking, speaking, recalling, etc.)
  *   - text delta: accumulates into a live "streaming" turn visible as it arrives
  *   - capture: forwarded to parent to place a memory frame
  *   - wall_color: forwarded to parent to animate a wall
+ *   - undo: forwarded to parent to revert last action
  *   - done: finalize the streaming turn as a completed companion turn
+ *   - error: display error message
+ *
+ * Per Principle 2: The pause is reciprocal. Presence events drive
+ * environmental changes in the room — no spinners, no "typing..." indicators.
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -19,10 +25,12 @@ import type {
   Memory,
   Room,
 } from "@/lib/schema";
+import type { CompanionPresence } from "@/lib/llm/prompts";
 
 export interface ChatTurn {
   role: "user" | "companion";
   content: string;
+  silent?: boolean; // UI-generated turns (recall, frame clicks) — not sent to the API
 }
 
 export interface ChatPanelHandle {
@@ -39,6 +47,7 @@ interface Props {
   onWallColor: (args: ChangeWallColorArgs) => void;
   onUndo: () => void;
   onTurn: (turn: ChatTurn) => void;
+  onPresence?: (presence: CompanionPresence) => void;
   handleRef?: React.MutableRefObject<ChatPanelHandle | null>;
 }
 
@@ -52,6 +61,7 @@ export function ChatPanel({
   onWallColor,
   onUndo,
   onTurn,
+  onPresence,
   handleRef,
 }: Props) {
   const [input, setInput] = useState("");
@@ -93,10 +103,12 @@ export function ChatPanel({
             companion,
             room,
             season,
-            conversation: conversation.map((t) => ({
-              role: t.role,
-              content: t.content,
-            })),
+            conversation: conversation
+              .filter((t) => !t.silent) // never send silent/UI turns to the API
+              .map((t) => ({
+                role: t.role,
+                content: t.content,
+              })),
             recentMemories,
             userMessage: text,
           }),
@@ -124,29 +136,61 @@ export function ChatPanel({
           const { value, done } = await reader.read();
           if (done) break;
           buffer += decoder.decode(value, { stream: true });
-          // Parse complete SSE events (separated by blank line)
-          let idx: number;
-          while ((idx = buffer.indexOf("\n\n")) !== -1) {
-            const rawEvent = buffer.slice(0, idx);
-            buffer = buffer.slice(idx + 2);
-            const line = rawEvent.split("\n").find((l) => l.startsWith("data: "));
-            if (!line) continue;
+
+          // Parse SSE events: each event is separated by \n\n
+          // Format: event: <type>\ndata: <json>\n\n
+          let boundary: number;
+          while ((boundary = buffer.indexOf("\n\n")) !== -1) {
+            const rawEvent = buffer.slice(0, boundary);
+            buffer = buffer.slice(boundary + 2);
+
+            // Parse event type and data
+            const lines = rawEvent.split("\n");
+            let eventType = "";
+            let eventData = "";
+
+            for (const line of lines) {
+              if (line.startsWith("event: ")) {
+                eventType = line.slice(7).trim();
+              } else if (line.startsWith("data: ")) {
+                eventData = line.slice(6);
+              }
+            }
+
+            if (!eventType && !eventData) continue;
+
             try {
-              const evt = JSON.parse(line.slice(6));
-              if (evt.type === "text" && typeof evt.delta === "string") {
-                accumulated += evt.delta;
-                setStreaming(accumulated);
-              } else if (evt.type === "capture" && evt.args) {
-                onCapture(evt.args);
-              } else if (evt.type === "wall_color" && evt.args) {
-                onWallColor(evt.args);
-              } else if (evt.type === "undo") {
+              // Handle presence events (Principle 2: the pause is reciprocal)
+              if (eventType === "presence") {
+                const data = JSON.parse(eventData);
+                const kind = data.kind as CompanionPresence;
+                onPresence?.(kind);
+              } else if (eventType === "text") {
+                const data = JSON.parse(eventData);
+                if (typeof data.delta === "string") {
+                  accumulated += data.delta;
+                  setStreaming(accumulated);
+                }
+              } else if (eventType === "capture") {
+                const data = JSON.parse(eventData);
+                if (data.args) {
+                  onCapture(data.args);
+                }
+              } else if (eventType === "wall_color") {
+                const data = JSON.parse(eventData);
+                if (data.args) {
+                  onWallColor(data.args);
+                }
+              } else if (eventType === "undo") {
                 onUndo();
-              } else if (evt.type === "error" && evt.message) {
-                setError(evt.message);
+              } else if (eventType === "done") {
+                // Stream complete
+              } else if (eventType === "error") {
+                const data = JSON.parse(eventData);
+                setError(data.message || "Unknown error");
               }
             } catch {
-              // ignore malformed
+              // Malformed JSON — skip
             }
           }
         }
@@ -162,9 +206,11 @@ export function ChatPanel({
       }
       setStreaming("");
       setBusy(false);
+      // Reset presence to idle after stream completes
+      onPresence?.(undefined as any);
       abortRef.current = null;
     },
-    [busy, companion, conversation, onCapture, onTurn, onUndo, onWallColor, recentMemories, room, season],
+    [busy, companion, conversation, onCapture, onTurn, onUndo, onWallColor, onPresence, recentMemories, room, season],
   );
 
   // Expose imperative dispatch to parent (for click-to-recall, etc.)

@@ -11,6 +11,8 @@
  *    triggers a recall in-character
  *  - export → downloads a ZIP of markdown memories
  *  - auth → Supabase user session (when configured)
+ *  - presence → companion state (thinking, speaking, etc.) drives room
+ *    environmental changes per Principle 2 & 3
  */
 
 import Link from "next/link";
@@ -26,6 +28,7 @@ import type {
   Memory,
   UserProfile,
 } from "@/lib/schema";
+import type { CompanionPresence } from "@/lib/llm/prompts";
 import {
   appendTurn,
   bumpMemoryAccess,
@@ -53,6 +56,7 @@ export function HomeExperience() {
   const [selectedMemoryId, setSelectedMemoryId] = useState<string | null>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [supabaseConfigured, setSupabaseConfigured] = useState(false);
+  const [presence, setPresence] = useState<CompanionPresence | null>(null);
   const chatRef = useRef<ChatPanelHandle | null>(null);
   const supabase = useMemo(() => createBrowserSupabase(), []);
 
@@ -109,7 +113,9 @@ export function HomeExperience() {
     return () => document.body.classList.remove("no-scroll");
   }, []);
 
-  // Proactive recall: companion brings up an old memory after idle period
+  // Proactive recall: companion brings up an old memory after idle period.
+  // This is a LOCAL-ONLY message — it does NOT call the API.
+  // It's the companion musing to themselves, not a conversation turn.
   useEffect(() => {
     const IDLE_MS = 30_000; // 30 seconds of inactivity
     let timer: ReturnType<typeof setTimeout> | null = null;
@@ -118,7 +124,7 @@ export function HomeExperience() {
       if (timer) clearTimeout(timer);
       timer = setTimeout(() => {
         const mem = pickMemoryForProactiveRecall();
-        if (mem && chatRef.current) {
+        if (mem) {
           const label = mem.title ?? mem.body.slice(0, 40);
           const intros = [
             `I was just thinking about ${label}...`,
@@ -126,7 +132,10 @@ export function HomeExperience() {
             `That memory about ${label} — it still lingers here.`,
           ];
           const intro = intros[Math.floor(Math.random() * intros.length)];
-          void chatRef.current.dispatch(intro, { silent: true });
+          // Local-only: store as a silent companion turn.
+          // Silent turns appear in the chat but are NEVER sent to the API.
+          appendTurn("companion", intro, true);
+          setTick((t) => t + 1);
         }
       }, IDLE_MS);
     };
@@ -173,12 +182,13 @@ export function HomeExperience() {
       conversation.map((t) => ({
         role: t.role,
         content: t.content,
+        silent: t.silent,
       })),
     [conversation],
   );
 
   const handleTurn = useCallback((turn: ChatTurn) => {
-    appendTurn(turn.role, turn.content);
+    appendTurn(turn.role, turn.content, turn.silent);
   }, []);
 
   const handleCapture = useCallback((capture: CaptureMemoryArgs) => {
@@ -206,6 +216,10 @@ export function HomeExperience() {
     undoLast();
   }, []);
 
+  const handlePresence = useCallback((p: CompanionPresence) => {
+    setPresence(p);
+  }, []);
+
   const handleFrameClick = useCallback((memoryId: string) => {
     setHighlighted(memoryId);
     window.setTimeout(
@@ -215,10 +229,11 @@ export function HomeExperience() {
     const mem = bumpMemoryAccess(memoryId);
     if (mem) {
       setSelectedMemoryId(memoryId);
-      if (chatRef.current) {
-        const label = mem.title ?? mem.body.slice(0, 40);
-        void chatRef.current.dispatch(`*(looks at the frame of "${label}")*`);
-      }
+      // Local-only: mark frame-click as a silent turn.
+      // Silent turns appear in the chat but are NEVER sent to the API.
+      const label = mem.title ?? mem.body.slice(0, 40);
+      appendTurn("user", `*(looks at the frame of "${label}")*`, true);
+      setTick((t) => t + 1);
     }
   }, []);
 
@@ -270,6 +285,7 @@ export function HomeExperience() {
               onFrameClick={handleFrameClick}
               highlightedMemoryId={highlighted}
               recentlyPlacedMemoryId={justPlaced}
+              presence={presence}
               key={tick}
             />
           ) : (
@@ -280,6 +296,7 @@ export function HomeExperience() {
               onFrameClick={handleFrameClick}
               highlightedMemoryId={highlighted}
               recentlyPlacedMemoryId={justPlaced}
+              presence={presence}
               key={tick}
             />
           )}
@@ -383,6 +400,7 @@ export function HomeExperience() {
           onWallColor={handleWallColor}
           onUndo={handleUndo}
           onTurn={handleTurn}
+          onPresence={handlePresence}
           handleRef={chatRef}
         />
       </div>

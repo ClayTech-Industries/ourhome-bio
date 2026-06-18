@@ -1,10 +1,19 @@
 "use client";
 
+/**
+ * Kitchen — collaboration room.
+ *
+ * Companion presence states rendered as environmental changes,
+ * matching LivingRoom's approach per Principle 3.
+ */
+
 import { useRef } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { MemoryFrame } from "./MemoryFrame";
 import type { Room, MemoryObject, Memory } from "@/lib/schema";
+import type { CompanionPresence } from "@/lib/llm/prompts";
+import { presenceToEnvironment } from "./presence-utils";
 
 function AnimatedWall({
   targetColor,
@@ -64,7 +73,7 @@ function Counter({ position }: { position: [number, number, number] }) {
         <meshStandardMaterial color="#E0E0E0" roughness={0.3} metalness={0.1} />
       </mesh>
       {/* Cabinets */}
-      <mesh position={[0, 0.25, 0]} castShadow receiveShadow>
+      <mesh position={[0, 0.25, 0]} castShadow>
         <boxGeometry args={[2, 0.5, 0.55]} />
         <meshStandardMaterial color="#D4A373" roughness={0.6} />
       </mesh>
@@ -105,6 +114,7 @@ export function Kitchen({
   onFrameClick,
   highlightedMemoryId,
   recentlyPlacedMemoryId,
+  presence,
 }: {
   room: Room;
   memoryObjects: MemoryObject[];
@@ -112,8 +122,27 @@ export function Kitchen({
   onFrameClick?: (memoryId: string) => void;
   highlightedMemoryId?: string | null;
   recentlyPlacedMemoryId?: string | null;
+  presence?: CompanionPresence | null;
 }) {
   const wc = room.wallColors || {};
+  const env = presenceToEnvironment(presence);
+  const baseIntensity = room.lighting?.intensity ?? 1;
+
+  // Refs for lerp-able lighting
+  const pointLightRef = useRef<THREE.PointLight>(null);
+  const sphereLightRef = useRef<THREE.Mesh>(null);
+
+  useFrame(() => {
+    if (pointLightRef.current) {
+      const target = env.pointLightIntensity * baseIntensity;
+      pointLightRef.current.intensity += (target - pointLightRef.current.intensity) * 0.04;
+    }
+    if (sphereLightRef.current) {
+      const mat = sphereLightRef.current.material as THREE.MeshStandardMaterial;
+      const targetEmissive = env.ambientIntensity * 0.3;
+      mat.emissiveIntensity += (targetEmissive - mat.emissiveIntensity) * 0.04;
+    }
+  });
 
   // Kitchen wall positions — same room dimensions as living room
   const wallPositions: Record<string, [number, number, number, number, number, number]> = {
@@ -125,6 +154,9 @@ export function Kitchen({
 
   return (
     <group>
+      {/* Ambient light — presence-responsive */}
+      <ambientLight intensity={env.ambientIntensity * baseIntensity} color="#FFF8E7" />
+
       {/* Floor */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
         <planeGeometry args={[6, 6]} />
@@ -157,27 +189,32 @@ export function Kitchen({
       {/* Window on south wall */}
       <Window position={[0, 2, 2.97]} rotation={[0, 0, 0]} />
 
-      {/* Light fixture */}
-      <mesh position={[0, 2.7, 0]}>
+      {/* Light fixture — presence-responsive */}
+      <mesh ref={sphereLightRef} position={[0, 2.7, 0]}>
         <sphereGeometry args={[0.15, 16, 16]} />
         <meshStandardMaterial color="#FFF8DC" emissive="#FFD700" emissiveIntensity={0.3} />
       </mesh>
-      <pointLight position={[0, 2.5, 0]} intensity={0.8} color="#FFF8DC" castShadow />
+      <pointLight
+        ref={pointLightRef}
+        position={[0, 2.5, 0]}
+        intensity={0.8 * baseIntensity}
+        color="#FFF8DC"
+        castShadow
+      />
 
       {/* Memory frames */}
       {memoryObjects.map((obj) => {
         const memory = memoriesById[obj.memoryId];
         if (!memory) return null;
-        const isHighlighted = highlightedMemoryId === memory.id;
-        const isNew = recentlyPlacedMemoryId === memory.id;
+        const isRecalling = presence === "recalling" && obj === memoryObjects[memoryObjects.length - 1];
 
         return (
           <MemoryFrame
             key={obj.id}
             object={obj}
             memory={memory}
-            highlighted={isHighlighted}
-            justPlaced={isNew}
+            highlighted={highlightedMemoryId === memory.id || isRecalling}
+            justPlaced={recentlyPlacedMemoryId === memory.id}
             onClick={() => onFrameClick?.(memory.id)}
           />
         );
