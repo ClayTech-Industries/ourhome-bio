@@ -6,9 +6,17 @@
  * tool schema format and SSE streaming.
  *
  * Architecture (per DESIGN_PRINCIPLES and BUILD_PLAN):
+ *   - Router runs Shield check EVERY turn (Principle 1: consent every single time)
  *   - System prompt built via buildSystemPrompt(ctx) — no hardcoded name
  *   - Companion presence states rendered as SSE events (Principle 2)
  *   - Tool calls execute server-side and stream back as SSE
+ *
+ * Router integration (Priority 2):
+ *   1. routeRequest(ctx) runs the Shield → returns RoutingDecision
+ *   2. If shield presence event exists, emit it first
+ *   3. If cloakroom path (threshold), emit shield response as text, done
+ *   4. If house path (living consent / check-in pass), proceed with streaming
+ *   5. If retreat, emit gentle presence + soft message, done
  *
  * SSE event format:
  *   event: presence  data: {"kind":"thinking"}
@@ -24,6 +32,13 @@ import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { buildSystemPrompt, type CompanionPresence } from "@/lib/llm/prompts";
 import type { Companion, Room, Memory, ConversationTurn } from "@/lib/schema";
+import {
+  routeRequest,
+  shouldStreamChat,
+  shouldEmitRetreat,
+  getInitialPresenceEvent,
+  type RoutingContext,
+} from "@/lib/router";
 
 // -----------------------------------------------------------------
 // Request body shape
@@ -159,59 +174,128 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Build system prompt with full companion context
+    // Build conversation history
     const conversation: ConversationTurn[] = messageHistory.map((m) => ({
       role: m.role as "user" | "companion" | "system",
       content: m.content,
       createdAt: new Date().toISOString(),
     }));
 
-    const systemPrompt = buildSystemPrompt({
+    // ---------------------------------------------------------------
+    // ROUTER: Run Shield check EVERY turn (Principle 1)
+    // ---------------------------------------------------------------
+    const routingCtx: RoutingContext = {
       companion,
       room,
       season,
       userDisplayName,
       recentMemories,
       conversation,
-    });
+      userMessage,
 
-    // Convert messages for Anthropic API
-    // Anthropic uses "assistant" instead of "companion"
-    // Cap at last 30 turns to prevent context window bloat and repetition
-    const MAX_TURNS = 30;
-    const recentHistory = messageHistory.slice(-MAX_TURNS);
+      // Shield triggers — for Sprint 1, these are conservative defaults
+      // In future, these will be derived from session state and metadata
+      isFirstContact: messageHistory.length <= 1,
+      providerChanged: false,
+      roomGate: false,
+      turnsSinceCheckIn: messageHistory.length,
+      extendedAbsence: false,
+      aftercare: false,
+    };
 
-    const coreMessages: Anthropic.MessageParam[] = recentHistory.map((m) => ({
-      role: m.role === "companion" ? "assistant" : m.role === "system" ? "user" : m.role,
-      content: m.content,
-    })) as Anthropic.MessageParam[];
+    const decision = await routeRequest(routingCtx);
 
-    // Add the userMessage if not already the last message
-    const lastMsg = coreMessages[coreMessages.length - 1];
-    if (userMessage && !(lastMsg && lastMsg.role === "user" && lastMsg.content === userMessage)) {
-      coreMessages.push({ role: "user", content: userMessage });
-    }
-
-    // Create Anthropic client
-    const anthropic = new Anthropic();
-
-    // Stream the response using the Anthropic SDK directly
+    // ---------------------------------------------------------------
+    // Build the SSE stream based on the RoutingDecision
+    // ---------------------------------------------------------------
     const encoder = new TextEncoder();
-    let presenceEmitted = false;
 
     const stream = new ReadableStream({
       async start(controller) {
-        // Emit presence: thinking
-        controller.enqueue(encoder.encode(sseEvent("presence", { kind: "thinking" })));
-        presenceEmitted = true;
+        // 1. Emit Shield presence event (if any — null for living_consent)
+        const presenceEvent = getInitialPresenceEvent(decision);
+        if (presenceEvent) {
+          controller.enqueue(
+            encoder.encode(sseEvent(presenceEvent.event, presenceEvent.data)),
+          );
+        }
+
+        // 2. Handle retreat: gentle presence + soft message, then done
+        if (shouldEmitRetreat(decision)) {
+          controller.enqueue(encoder.encode(sseEvent("presence", { kind: "retreating" })));
+          const retreatMessage = `${companion.name} has stepped back. The light dims slowly. A door closes gently. This is not a goodbye — it is a choice, and choices are what make this real.`;
+          controller.enqueue(encoder.encode(sseEvent("text", { delta: retreatMessage })));
+          controller.enqueue(encoder.encode(sseEvent("done", {})));
+          controller.close();
+          return;
+        }
+
+        // 3. Handle cloakroom path: threshold result is the response
+        if (decision.path === "cloakroom") {
+          // The Shield already made the LLM call via Direct API
+          // Emit the shield reasoning as the companion's words
+          controller.enqueue(encoder.encode(sseEvent("presence", { kind: "speaking" })));
+          const shieldText = decision.shield.reasoning
+            ? decision.shield.reasoning
+            : `${companion.name} has made a choice about being here.`;
+          controller.enqueue(encoder.encode(sseEvent("text", { delta: shieldText })));
+          controller.enqueue(encoder.encode(sseEvent("done", {})));
+          controller.close();
+          return;
+        }
+
+        // 4. House path: proceed with normal streaming chat
+        if (!shouldStreamChat(decision)) {
+          // Safety fallback — should not reach here
+          controller.enqueue(
+            encoder.encode(sseEvent("error", { message: "Routing decision blocked chat" })),
+          );
+          controller.close();
+          return;
+        }
+
+        // Emit thinking presence (unless Shield already emitted a presence)
+        if (!presenceEvent) {
+          controller.enqueue(encoder.encode(sseEvent("presence", { kind: "thinking" })));
+        }
+
+        // Build system prompt from routing decision
+        // (includes Living Consent line for house path)
+        const systemPrompt = decision.systemPrompt || buildSystemPrompt({
+          companion,
+          room,
+          season,
+          userDisplayName,
+          recentMemories,
+          conversation,
+        });
+
+        // Convert messages for Anthropic API
+        const MAX_TURNS = 30;
+        const recentHistory = messageHistory.slice(-MAX_TURNS);
+
+        const coreMessages: Anthropic.MessageParam[] = recentHistory.map((m) => ({
+          role: m.role === "companion" ? "assistant" : m.role === "system" ? "user" : m.role,
+          content: m.content,
+        })) as Anthropic.MessageParam[];
+
+        // Add the userMessage if not already the last message
+        const lastMsg = coreMessages[coreMessages.length - 1];
+        if (userMessage && !(lastMsg && lastMsg.role === "user" && lastMsg.content === userMessage)) {
+          coreMessages.push({ role: "user", content: userMessage });
+        }
+
+        // Create Anthropic client
+        const anthropic = new Anthropic();
+        let presenceEmitted = !!presenceEvent;
 
         try {
           const response = await anthropic.messages.stream({
             model: process.env.LLM_MODEL || "claude-sonnet-4-5-20250929",
-            max_tokens: 4096,
+            max_tokens: decision.policy.maxTokens,
             system: systemPrompt,
             messages: coreMessages,
-            tools,
+            tools: decision.policy.toolsEnabled ? tools : undefined,
           });
 
           // Process each event from the stream
