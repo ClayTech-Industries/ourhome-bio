@@ -226,8 +226,8 @@ export function migrateFramePositions(): void {
     const col = i % 5;
     const row = Math.floor(i / 5);
     const newX = 2.93;
-    const newY = 2.0 - row * 0.75;
-    const newZ = -1.8 + col * 0.9;
+    const newY = 1.7 + row * 0.8;
+    const newZ = -1.6 + col * 0.75;
     if (obj.position.x !== newX || obj.position.y !== newY || obj.position.z !== newZ) {
       obj.position.x = newX;
       obj.position.y = newY;
@@ -309,8 +309,8 @@ export function captureMemory(input: CaptureInput): { memory: Memory; object: Me
   const row = Math.floor(existingOnWall / 5);
   const position = {
     x: 2.93,
-    y: 2.0 - row * 0.75,
-    z: -1.8 + col * 0.9,
+    y: 1.7 + row * 0.8,
+    z: -1.6 + col * 0.75,
   };
 
   const object: MemoryObject = {

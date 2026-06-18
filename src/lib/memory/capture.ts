@@ -193,8 +193,8 @@ export function placeFrameOnWall(existingCount: number): {
   return {
     position: {
       x: 2.93,  // east wall at 3.0, pulled back so frame sits in front
-      y: 2.0 - row * 0.75,  // tighter vertical spacing
-      z: -1.8 + col * 0.9,   // tighter horizontal spacing, centered better
+      y: 1.7 + row * 0.8,  // start at 1.7, each row goes UP
+      z: -1.6 + col * 0.75,  // tighter side-to-side, centered
     },
   };
 }

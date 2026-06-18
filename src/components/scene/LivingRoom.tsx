@@ -219,7 +219,7 @@ export function LivingRoom({
       <Couch position={[-1.6, 0, 0]} />
 
       {/* Window on the south wall (behind viewer) — warm afternoon light */}
-      <Window position={[0, 1.5, ROOM_D / 2 - 0.06]} />
+      <Window position={[0, 1.5, ROOM_D / 2 - 0.02]} />
 
       {/* Area rug in front of couch */}
       <Rug position={[-1.0, 0, 1.2]} />
@@ -340,7 +340,9 @@ useGLTF.preload("/models/couch.glb");
 function Window({ position }: { position: [number, number, number] }) {
   const { scene } = useGLTF("/models/window.glb");
   const cloned = useMemo(() => scene.clone(true), [scene]);
-  return <primitive object={cloned} position={position} rotation={[0, Math.PI, 0]} />;
+  // Rotate to stand upright on south wall: 90° on X to make it vertical,
+  // then 180° on Y to face into the room
+  return <primitive object={cloned} position={position} rotation={[Math.PI / 2, Math.PI, 0]} />;
 }
 useGLTF.preload("/models/window.glb");
 
