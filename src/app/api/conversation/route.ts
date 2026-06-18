@@ -31,6 +31,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { buildSystemPrompt, type CompanionPresence } from "@/lib/llm/prompts";
+import { buildRoomContextPrompt } from "@/lib/llm/room-context";
 import type { Companion, Room, Memory, ConversationTurn } from "@/lib/schema";
 import {
   routeRequest,
@@ -286,7 +287,7 @@ export async function POST(request: NextRequest) {
 
         // Build system prompt from routing decision
         // (includes Living Consent line for house path)
-        const systemPrompt = decision.systemPrompt || buildSystemPrompt({
+        const basePrompt = decision.systemPrompt || buildSystemPrompt({
           companion,
           room,
           season,
@@ -294,6 +295,8 @@ export async function POST(request: NextRequest) {
           recentMemories,
           conversation,
         });
+        // Append room-specific context (mood, behavior, privacy)
+        const systemPrompt = basePrompt + "\n\n" + buildRoomContextPrompt(room.type);
 
         // Convert messages for Anthropic API
         const MAX_TURNS = 30;

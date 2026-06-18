@@ -11,6 +11,7 @@
 
 import { ulid } from "ulid";
 import type { Companion, Home, Memory, MemoryObject, Room } from "@/lib/schema";
+import { createAllRooms } from "@/lib/rooms/navigation";
 
 const STORAGE_KEY = "ourhome.v0.home";
 
@@ -156,41 +157,11 @@ export function createHome(companionName: string, companionPronouns = "they/them
     createdAt: now,
   };
 
-  const livingRoom: Room = {
-    id: crypto.randomUUID(),
-    slug: "living_room",
-    name: "Living Room",
-    type: "living_room",
-    wallColors: {
-      north: "#E8D5B7",
-      south: "#E8D5B7",
-      east: "#C4A882",
-      west: "#E8D5B7",
-    },
-    lighting: { preset: "afternoon", intensity: 1 },
-    unlocked: true,
-    createdAt: now,
-  };
-
-  const kitchen: Room = {
-    id: crypto.randomUUID(),
-    slug: "kitchen",
-    name: "Kitchen",
-    type: "kitchen",
-    wallColors: {
-      north: "#F0E6D3",
-      south: "#F0E6D3",
-      east: "#E2D5C5",
-      west: "#F0E6D3",
-    },
-    lighting: { preset: "morning", intensity: 1.1 },
-    unlocked: true,
-    createdAt: now,
-  };
+  const rooms = createAllRooms();
 
   const state: StoredState = {
     home,
-    rooms: [livingRoom, kitchen],
+    rooms,
     memories: [],
     memoryObjects: [],
     conversation: [],

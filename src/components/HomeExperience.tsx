@@ -47,6 +47,7 @@ import {
   subscribe,
   undoLast,
 } from "@/lib/storage/local";
+import { createAllRooms, ROOM_DEFINITIONS } from "@/lib/rooms/navigation";
 import { createBrowserSupabase } from "@/lib/db/supabase";
 
 export function HomeExperience() {
