@@ -55,9 +55,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Bad Request: message is required' }, { status: 400 });
     }
 
-    const EXPECTED_SECRET = process.env.RELAY_SECRET || 'nova';
+    // Security: RELAY_SECRET must be explicitly set. No insecure defaults.
+    const EXPECTED_SECRET = process.env.RELAY_SECRET;
+    if (!EXPECTED_SECRET) {
+      return NextResponse.json(
+        { error: "Server not configured: RELAY_SECRET must be set" },
+        { status: 503 },
+      );
+    }
     if (secret !== EXPECTED_SECRET) {
-      return NextResponse.json({ error: 'Forbidden: invalid secret' }, { status: 403 });
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     if (platform === 'telegram') {

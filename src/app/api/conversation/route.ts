@@ -39,6 +39,10 @@ import {
   getInitialPresenceEvent,
   type RoutingContext,
 } from "@/lib/router";
+import { checkRateLimit, getClientIP, logEnvWarnings } from "@/lib/security";
+
+// Log security warnings at module load (server startup)
+logEnvWarnings();
 
 // -----------------------------------------------------------------
 // Request body shape
@@ -146,6 +150,15 @@ const tools: Anthropic.Messages.Tool[] = [
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting — 30 req/min per IP (in-memory, Sprint 1)
+    const ip = getClientIP(request);
+    if (!checkRateLimit(ip)) {
+      return NextResponse.json(
+        { error: "Rate limit exceeded. Please slow down." },
+        { status: 429 },
+      );
+    }
+
     const body: ConversationRequest = await request.json();
     const {
       messages: rawMessages,
