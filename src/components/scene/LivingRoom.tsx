@@ -340,7 +340,7 @@ useGLTF.preload("/models/couch.glb");
 function Window({ position }: { position: [number, number, number] }) {
   const { scene } = useGLTF("/models/window.glb");
   const cloned = useMemo(() => scene.clone(true), [scene]);
-  return <primitive object={cloned} position={position} />;
+  return <primitive object={cloned} position={position} rotation={[0, Math.PI, 0]} />;
 }
 useGLTF.preload("/models/window.glb");
 

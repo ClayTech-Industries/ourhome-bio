@@ -192,9 +192,9 @@ export function placeFrameOnWall(existingCount: number): {
   const row = Math.floor(existingCount / 5);
   return {
     position: {
-      x: 2.99,  // east wall
-      y: 2.4 - row * 0.95,
-      z: -2.2 + col * 1.1,  // spread across the wall horizontally
+      x: 2.93,  // east wall at 3.0, pulled back so frame sits in front
+      y: 2.0 - row * 0.75,  // tighter vertical spacing
+      z: -1.8 + col * 0.9,   // tighter horizontal spacing, centered better
     },
   };
 }

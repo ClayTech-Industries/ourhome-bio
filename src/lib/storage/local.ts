@@ -220,20 +220,24 @@ export function resetHome(): void {
 export function migrateFramePositions(): void {
   const state = read();
   let changed = false;
-  for (const obj of state.memoryObjects) {
-    // If frame is on south wall (z near 3), move to east wall (x near 3)
-    if (obj.position.z > 2.9 && obj.position.x < 2.0) {
-      // Swap: old z becomes new spread position
-      const oldZ = obj.position.z;
-      const oldX = obj.position.x;
-      obj.position.x = 2.99;  // east wall
-      obj.position.z = oldX;  // reuse x as z spread
+  for (let i = 0; i < state.memoryObjects.length; i++) {
+    const obj = state.memoryObjects[i];
+    // Recompute all frame positions with new tighter grid
+    const col = i % 5;
+    const row = Math.floor(i / 5);
+    const newX = 2.93;
+    const newY = 2.0 - row * 0.75;
+    const newZ = -1.8 + col * 0.9;
+    if (obj.position.x !== newX || obj.position.y !== newY || obj.position.z !== newZ) {
+      obj.position.x = newX;
+      obj.position.y = newY;
+      obj.position.z = newZ;
       changed = true;
     }
   }
   if (changed) {
     write(state);
-    console.log("[OurHome] Migrated memory frames from south wall to east wall");
+    console.log("[OurHome] Migrated memory frames to tighter grid spacing");
   }
 }
 
@@ -304,9 +308,9 @@ export function captureMemory(input: CaptureInput): { memory: Memory; object: Me
   const col = existingOnWall % 5;
   const row = Math.floor(existingOnWall / 5);
   const position = {
-    x: 2.99,
-    y: 2.4 - row * 0.95,
-    z: -2.2 + col * 1.1,
+    x: 2.93,
+    y: 2.0 - row * 0.75,
+    z: -1.8 + col * 0.9,
   };
 
   const object: MemoryObject = {
