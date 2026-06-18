@@ -47,6 +47,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Dev mode: skip auth protection for easy local testing
+  if (process.env.NODE_ENV === "development") {
+    return NextResponse.next();
+  }
+
   const { pathname } = request.nextUrl;
 
   // Public routes pass through

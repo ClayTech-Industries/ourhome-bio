@@ -98,7 +98,7 @@ export async function bootstrapNewHome(
 
   try {
     // 1. Create companion
-    const { data: companionRow, error: companionError } = await supabase
+    let { data: companionRow, error: companionError } = await supabase
       .from("companions")
       .insert({
         id: localHome.companion.id,
@@ -143,7 +143,7 @@ export async function bootstrapNewHome(
     const companionId = companionRow?.id ?? localHome.companion.id;
 
     // 2. Create home
-    const { data: homeRow, error: homeError } = await supabase
+    let { data: homeRow, error: homeError } = await supabase
       .from("homes")
       .insert({
         id: localHome.id,

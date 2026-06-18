@@ -217,6 +217,18 @@ export function LivingRoom({
       {/* A simple suggestion of a couch — geometric, no clutter */}
       <Couch position={[-1.6, 0, 0]} />
 
+      {/* Window on the south wall (behind viewer) — warm afternoon light */}
+      <Window position={[0, 1.5, ROOM_D / 2 - 0.06]} />
+
+      {/* Area rug in front of couch */}
+      <Rug position={[-1.0, 0, 1.2]} />
+
+      {/* Side table next to the couch */}
+      <SideTable position={[-2.7, 0, 0.3]} />
+
+      {/* Floor lamp in the corner — warm fill light */}
+      <FloorLamp position={[-2.7, 0, -2.0]} />
+
       {/* Memory frames on the east wall */}
       {memoryObjects.map((obj) => {
         const memory = memoriesById[obj.memoryId];
@@ -316,25 +328,194 @@ function MemoryWallMesh({
 function Couch({ position }: { position: [number, number, number] }) {
   return (
     <group position={position}>
-      {/* base */}
-      <mesh position={[0, 0.35, 0]} castShadow receiveShadow>
-        <boxGeometry args={[2.4, 0.7, 1.0]} />
+      {/* Base seat — wider, lower, with rounded edges via scaled boxes */}
+      <mesh position={[0, 0.32, 0]} castShadow receiveShadow>
+        <boxGeometry args={[2.4, 0.55, 1.0]} />
         <meshStandardMaterial color="#8a6a55" roughness={0.85} metalness={0.02} />
       </mesh>
-      {/* back */}
-      <mesh position={[0, 0.95, -0.4]} castShadow>
-        <boxGeometry args={[2.4, 0.9, 0.25]} />
+      {/* Back rest — angled slightly */}
+      <mesh position={[0, 0.85, -0.38]} rotation={[0.12, 0, 0]} castShadow>
+        <boxGeometry args={[2.4, 0.8, 0.22]} />
         <meshStandardMaterial color="#7a5c49" roughness={0.88} metalness={0.02} />
       </mesh>
-      {/* cushion highlights — slightly different color for depth */}
-      <mesh position={[-0.6, 0.72, 0.05]} castShadow>
-        <boxGeometry args={[1.0, 0.18, 0.85]} />
-        <meshStandardMaterial color="#a0806b" roughness={0.82} metalness={0.02} />
+      {/* Arm rests */}
+      <mesh position={[-1.15, 0.55, 0]} castShadow>
+        <boxGeometry args={[0.18, 0.7, 1.0]} />
+        <meshStandardMaterial color="#7a5c49" roughness={0.88} metalness={0.02} />
       </mesh>
-      <mesh position={[0.6, 0.72, 0.05]} castShadow>
-        <boxGeometry args={[1.0, 0.18, 0.85]} />
-        <meshStandardMaterial color="#a0806b" roughness={0.82} metalness={0.02} />
+      <mesh position={[1.15, 0.55, 0]} castShadow>
+        <boxGeometry args={[0.18, 0.7, 1.0]} />
+        <meshStandardMaterial color="#7a5c49" roughness={0.88} metalness={0.02} />
       </mesh>
+      {/* Seat cushions — two plump cushions with slight gap */}
+      <mesh position={[-0.55, 0.68, 0.08]} castShadow>
+        <boxGeometry args={[1.05, 0.22, 0.82]} />
+        <meshStandardMaterial color="#a0806b" roughness={0.78} metalness={0.02} />
+      </mesh>
+      <mesh position={[0.55, 0.68, 0.08]} castShadow>
+        <boxGeometry args={[1.05, 0.22, 0.82]} />
+        <meshStandardMaterial color="#a0806b" roughness={0.78} metalness={0.02} />
+      </mesh>
+      {/* Back cushions — softer looking */}
+      <mesh position={[-0.55, 0.85, -0.25]} castShadow>
+        <boxGeometry args={[1.0, 0.5, 0.18]} />
+        <meshStandardMaterial color="#9a7a65" roughness={0.82} metalness={0.02} />
+      </mesh>
+      <mesh position={[0.55, 0.85, -0.25]} castShadow>
+        <boxGeometry args={[1.0, 0.5, 0.18]} />
+        <meshStandardMaterial color="#9a7a65" roughness={0.82} metalness={0.02} />
+      </mesh>
+      {/* Legs — small dark feet */}
+      {[
+        [-1.1, -0.95], [1.1, -0.95], [-1.1, 0.45], [1.1, 0.45],
+      ].map(([x, z], i) => (
+        <mesh key={i} position={[x, 0.05, z]} castShadow>
+          <cylinderGeometry args={[0.04, 0.05, 0.1, 8]} />
+          <meshStandardMaterial color="#3a2818" roughness={0.6} metalness={0.1} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+/**
+ * Window — a framed window on the south wall with light streaming in.
+ * The light creates a warm glow pattern on the floor.
+ */
+function Window({ position }: { position: [number, number, number] }) {
+  const frameColor = "#5a4030";
+  const winW = 2.0;
+  const winH = 1.6;
+  const frameW = 0.08;
+
+  return (
+    <group position={position}>
+      {/* Window frame — 4 pieces */}
+      <mesh position={[0, winH / 2, 0]} castShadow>
+        <boxGeometry args={[winW + frameW * 2, frameW, 0.1]} />
+        <meshStandardMaterial color={frameColor} roughness={0.6} metalness={0.05} />
+      </mesh>
+      <mesh position={[0, -winH / 2, 0]} castShadow>
+        <boxGeometry args={[winW + frameW * 2, frameW, 0.1]} />
+        <meshStandardMaterial color={frameColor} roughness={0.6} metalness={0.05} />
+      </mesh>
+      <mesh position={[-winW / 2 - frameW / 2, 0, 0]} castShadow>
+        <boxGeometry args={[frameW, winH, 0.1]} />
+        <meshStandardMaterial color={frameColor} roughness={0.6} metalness={0.05} />
+      </mesh>
+      <mesh position={[winW / 2 + frameW / 2, 0, 0]} castShadow>
+        <boxGeometry args={[frameW, winH, 0.1]} />
+        <meshStandardMaterial color={frameColor} roughness={0.6} metalness={0.05} />
+      </mesh>
+      {/* Cross divider */}
+      <mesh position={[0, 0, 0.01]}>
+        <boxGeometry args={[frameW * 0.7, winH, 0.06]} />
+        <meshStandardMaterial color={frameColor} roughness={0.6} metalness={0.05} />
+      </mesh>
+      <mesh position={[0, 0, 0.01]}>
+        <boxGeometry args={[winW, frameW * 0.7, 0.06]} />
+        <meshStandardMaterial color={frameColor} roughness={0.6} metalness={0.05} />
+      </mesh>
+      {/* Glass — warm translucent, like afternoon light */}
+      <mesh position={[0, 0, 0.02]}>
+        <planeGeometry args={[winW - 0.05, winH - 0.05]} />
+        <meshStandardMaterial
+          color="#FFE8C0"
+          transparent
+          opacity={0.25}
+          emissive="#FFD9A0"
+          emissiveIntensity={0.4}
+          roughness={0.1}
+          metalness={0}
+          side={THREE.DoubleSide}
+          toneMapped={false}
+        />
+      </mesh>
+    </group>
+  );
+}
+
+/**
+ * Rug — a soft textured area rug on the floor in front of the couch.
+ */
+function Rug({ position }: { position: [number, number, number] }) {
+  return (
+    <group position={position}>
+      {/* Main rug body */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]} receiveShadow>
+        <planeGeometry args={[3.0, 2.0]} />
+        <meshStandardMaterial color="#9a7a5a" roughness={0.95} metalness={0} />
+      </mesh>
+      {/* Border pattern */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.012, 0]}>
+        <ringGeometry args={[1.2, 1.25, 32]} />
+        <meshStandardMaterial color="#8a6a4a" roughness={0.9} metalness={0} />
+      </mesh>
+      {/* Center medallion */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.013, 0]}>
+        <ringGeometry args={[0.3, 0.5, 6]} />
+        <meshStandardMaterial color="#7a5a3a" roughness={0.9} metalness={0} />
+      </mesh>
+    </group>
+  );
+}
+
+/**
+ * Side table — a small round table next to the couch.
+ */
+function SideTable({ position }: { position: [number, number, number] }) {
+  return (
+    <group position={position}>
+      {/* Tabletop */}
+      <mesh position={[0, 0.55, 0]} castShadow>
+        <cylinderGeometry args={[0.3, 0.3, 0.04, 16]} />
+        <meshStandardMaterial color="#4a3525" roughness={0.5} metalness={0.1} />
+      </mesh>
+      {/* Stem */}
+      <mesh position={[0, 0.28, 0]} castShadow>
+        <cylinderGeometry args={[0.04, 0.04, 0.55, 8]} />
+        <meshStandardMaterial color="#3a2818" roughness={0.5} metalness={0.1} />
+      </mesh>
+      {/* Base */}
+      <mesh position={[0, 0.02, 0]} castShadow>
+        <cylinderGeometry args={[0.18, 0.2, 0.03, 16]} />
+        <meshStandardMaterial color="#3a2818" roughness={0.5} metalness={0.1} />
+      </mesh>
+    </group>
+  );
+}
+
+/**
+ * Floor lamp — warm light source in the corner.
+ */
+function FloorLamp({ position }: { position: [number, number, number] }) {
+  return (
+    <group position={position}>
+      {/* Base */}
+      <mesh position={[0, 0.03, 0]} castShadow>
+        <cylinderGeometry args={[0.15, 0.18, 0.06, 16]} />
+        <meshStandardMaterial color="#3a2818" roughness={0.5} metalness={0.1} />
+      </mesh>
+      {/* Stem */}
+      <mesh position={[0, 0.8, 0]} castShadow>
+        <cylinderGeometry args={[0.02, 0.025, 1.55, 8]} />
+        <meshStandardMaterial color="#3a2818" roughness={0.5} metalness={0.1} />
+      </mesh>
+      {/* Lamp shade */}
+      <mesh position={[0, 1.6, 0]} castShadow>
+        <coneGeometry args={[0.25, 0.3, 16, 1, true]} />
+        <meshStandardMaterial
+          color="#F0D8A0"
+          roughness={0.8}
+          metalness={0}
+          emissive="#FFD080"
+          emissiveIntensity={0.6}
+          side={THREE.DoubleSide}
+          toneMapped={false}
+        />
+      </mesh>
+      {/* Actual light source */}
+      <pointLight position={[0, 1.5, 0]} intensity={0.4} color="#FFD080" distance={4} decay={2} />
     </group>
   );
 }
