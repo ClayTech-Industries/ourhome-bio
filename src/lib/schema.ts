@@ -66,12 +66,21 @@ export type RoomType = z.infer<typeof RoomType>;
 export const WallKey = z.enum(["north", "south", "east", "west"]);
 export type WallKey = z.infer<typeof WallKey>;
 
+export const WallHistoryEntry = z.object({
+  color: HexColor,
+  colorName: z.string().max(80).optional(),
+  changedAt: z.string().datetime(),
+  changedBy: z.enum(["user", "companion", "system"]).default("companion"),
+});
+export type WallHistoryEntry = z.infer<typeof WallHistoryEntry>;
+
 export const Room = z.object({
   id: UUID,
   slug: z.string(),
   name: z.string(),
   type: RoomType,
   wallColors: z.partialRecord(WallKey, HexColor).default({}),
+  wallHistory: z.record(WallKey, z.array(WallHistoryEntry)).default({}),
   lighting: z
     .object({
       preset: z.enum(["morning", "afternoon", "evening", "night"]).default("afternoon"),

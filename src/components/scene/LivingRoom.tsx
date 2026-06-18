@@ -19,10 +19,13 @@
 import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import type { Room, MemoryObject, Memory } from "@/lib/schema";
+import type { Room, MemoryObject, Memory, WallKey } from "@/lib/schema";
 import type { CompanionPresence } from "@/lib/llm/prompts";
 import { MemoryFrame } from "./MemoryFrame";
 import { presenceToEnvironment } from "./presence-utils";
+import { WallShader } from "./WallShader";
+import { computeWallPatina, getGhostLayers, computeMemoryGlowCenter } from "@/lib/patina/wall-patina";
+import { getRoomLighting } from "@/lib/scene/lighting";
 
 interface LivingRoomProps {
   room: Room;
@@ -56,6 +59,19 @@ export function LivingRoom({
 
   const env = presenceToEnvironment(presence);
   const baseIntensity = room.lighting?.intensity ?? 1;
+  const presetName = room.lighting?.preset ?? "afternoon";
+  const lighting = getRoomLighting(presetName);
+
+  // Compute patina and ghost layers for each wall (Sprint 2)
+  const memoriesInRoom = memoryObjects
+    .map((o) => memoriesById[o.memoryId])
+    .filter((m): m is Memory => Boolean(m));
+
+  const wallPatina = (wall: WallKey) => computeWallPatina(wall, room, room.wallHistory?.[wall], memoriesInRoom);
+  const ghostFor = (wall: WallKey) => getGhostLayers(wall, room.wallHistory?.[wall]);
+
+  // Memory glow center for east wall
+  const glowCenter = computeMemoryGlowCenter(memoryObjects);
 
   // Refs for lerp-able values
   const ambientRef = useRef<THREE.AmbientLight>(null);
@@ -116,32 +132,64 @@ export function LivingRoom({
         <meshStandardMaterial color="#F4E9D8" roughness={1} />
       </mesh>
 
-      {/* North wall (back) */}
-      <Wall position={[0, ROOM_H / 2, -ROOM_D / 2]} width={ROOM_W} height={ROOM_H} color={north} />
+      {/* North wall (back) — with patina and ghost layers */}
+      <WallShader
+        position={[0, ROOM_H / 2, -ROOM_D / 2]}
+        width={ROOM_W}
+        height={ROOM_H}
+        color={north}
+        patina={wallPatina("north")}
+        ghostColor1={ghostFor("north").ghost1 ?? north}
+        ghostColor2={ghostFor("north").ghost2 ?? north}
+        ghostOpacity={ghostFor("north").opacity}
+        lightIntensity={lighting.wallIntensity}
+        lightTint={lighting.wallTint}
+      />
       {/* South wall (front, behind camera) */}
-      <Wall
+      <WallShader
         position={[0, ROOM_H / 2, ROOM_D / 2]}
         rotationY={Math.PI}
         width={ROOM_W}
         height={ROOM_H}
         color={south}
+        patina={wallPatina("south")}
+        ghostColor1={ghostFor("south").ghost1 ?? south}
+        ghostColor2={ghostFor("south").ghost2 ?? south}
+        ghostOpacity={ghostFor("south").opacity}
+        lightIntensity={lighting.wallIntensity}
+        lightTint={lighting.wallTint}
       />
       {/* West wall (left) */}
-      <Wall
+      <WallShader
         position={[-ROOM_W / 2, ROOM_H / 2, 0]}
         rotationY={Math.PI / 2}
         width={ROOM_D}
         height={ROOM_H}
         color={west}
+        patina={wallPatina("west")}
+        ghostColor1={ghostFor("west").ghost1 ?? west}
+        ghostColor2={ghostFor("west").ghost2 ?? west}
+        ghostOpacity={ghostFor("west").opacity}
+        lightIntensity={lighting.wallIntensity}
+        lightTint={lighting.wallTint}
       />
-      {/* East wall (right) — the Memory Wall */}
-      <MemoryWallMesh
+      {/* East wall (right) — the Memory Wall with warmth and glow */}
+      <WallShader
         position={[ROOM_W / 2, ROOM_H / 2, 0]}
         rotationY={-Math.PI / 2}
         width={ROOM_D}
         height={ROOM_H}
         color={east}
-        warmth={env.memoryWallWarmth}
+        patina={wallPatina("east")}
+        memoryWarmth={env.memoryWallWarmth}
+        memoryGlowPos={glowCenter.pos}
+        memoryGlowRadius={glowCenter.radius}
+        ghostColor1={ghostFor("east").ghost1 ?? east}
+        ghostColor2={ghostFor("east").ghost2 ?? east}
+        ghostOpacity={ghostFor("east").opacity}
+        lightIntensity={lighting.wallIntensity}
+        lightTint={lighting.wallTint}
+        isMemoryWall
       />
 
       {/* A simple suggestion of a couch — geometric, no clutter */}

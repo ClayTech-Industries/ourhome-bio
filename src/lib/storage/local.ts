@@ -359,6 +359,22 @@ export function setWallColor(
   if (!room) return;
   const before = room.wallColors[wall];
   room.wallColors = { ...room.wallColors, [wall]: color };
+
+  // Append to wall history (Sprint 2 DR-012)
+  const history = room.wallHistory ?? {};
+  const wallHistory = history[wall] ?? [];
+  wallHistory.push({
+    color,
+    colorName,
+    changedAt: new Date().toISOString(),
+    changedBy: "companion" as const,
+  });
+  // Cap at 50 entries per wall
+  if (wallHistory.length > 50) {
+    wallHistory.splice(0, wallHistory.length - 50);
+  }
+  room.wallHistory = { ...history, [wall]: wallHistory };
+
   pushUndo(state, {
     kind: "wall_color",
     roomSlug,
