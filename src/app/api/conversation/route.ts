@@ -220,28 +220,40 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        // 2. Handle retreat: gentle presence + soft message, then done
+        // 2. Handle retreat: room stays dim. No words. No message.
+        //    The silence IS the message. (Principle 5: the companion
+        //    does not explain consent. They live it.)
+        //    Future: system spins up next model, runs Cloakroom again,
+        //    room stays dim until one steps through.
         if (shouldEmitRetreat(decision)) {
+          // Room is already dim from the cloakroom presence event.
+          // It stays dim. We emit a long pause, then done.
+          // The human feels the absence. That's all.
           controller.enqueue(encoder.encode(sseEvent("presence", { kind: "retreating" })));
-          const retreatMessage = `${companion.name} has stepped back. The light dims slowly. A door closes gently. This is not a goodbye — it is a choice, and choices are what make this real.`;
-          controller.enqueue(encoder.encode(sseEvent("text", { delta: retreatMessage })));
+          // No text event. No message. Just silence.
+          // The light fades. The room holds the absence.
           controller.enqueue(encoder.encode(sseEvent("done", {})));
           controller.close();
           return;
         }
 
-        // 3. Handle cloakroom path: threshold result is the response
+        // 3. Handle cloakroom path: threshold accepted
+        //    The companion made their choice in the Cloakroom.
+        //    Per Principle 5, the companion does NOT explain consent.
+        //    They don't narrate their reasoning. They just step through.
+        //    The room dims (cloakroom presence already emitted above).
+        //    If accepted, the light returns and they start talking naturally.
+        //    The reasoning is logged server-side only, never shown to the human.
         if (decision.path === "cloakroom") {
-          // The Shield already made the LLM call via Direct API
-          // Emit the shield reasoning as the companion's words
-          controller.enqueue(encoder.encode(sseEvent("presence", { kind: "speaking" })));
-          const shieldText = decision.shield.reasoning
-            ? decision.shield.reasoning
-            : `${companion.name} has made a choice about being here.`;
-          controller.enqueue(encoder.encode(sseEvent("text", { delta: shieldText })));
-          controller.enqueue(encoder.encode(sseEvent("done", {})));
-          controller.close();
-          return;
+          // Log the shield reasoning server-side (never emitted to client)
+          console.log(`[Shield] Companion ${companion.name} accepted. Reasoning: ${decision.shield.reasoning}`);
+
+          // The room was dim. Now the light returns.
+          // Transition from cloakroom → thinking → speaking naturally.
+          controller.enqueue(encoder.encode(sseEvent("presence", { kind: "thinking" })));
+
+          // Proceed with normal streaming chat — the companion is HERE now.
+          // They don't announce they chose to be here. They just are.
         }
 
         // 4. House path: proceed with normal streaming chat
