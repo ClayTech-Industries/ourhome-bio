@@ -213,6 +213,30 @@ export function resetHome(): void {
   write(emptyState);
 }
 
+/**
+ * Migrate existing memory frame positions from south wall (z=2.99)
+ * to east wall (x=2.99). One-time fix for Sprint 2.
+ */
+export function migrateFramePositions(): void {
+  const state = read();
+  let changed = false;
+  for (const obj of state.memoryObjects) {
+    // If frame is on south wall (z near 3), move to east wall (x near 3)
+    if (obj.position.z > 2.9 && obj.position.x < 2.0) {
+      // Swap: old z becomes new spread position
+      const oldZ = obj.position.z;
+      const oldX = obj.position.x;
+      obj.position.x = 2.99;  // east wall
+      obj.position.z = oldX;  // reuse x as z spread
+      changed = true;
+    }
+  }
+  if (changed) {
+    write(state);
+    console.log("[OurHome] Migrated memory frames from south wall to east wall");
+  }
+}
+
 // -----------------------------------------------------------------
 // Conversation log
 // -----------------------------------------------------------------

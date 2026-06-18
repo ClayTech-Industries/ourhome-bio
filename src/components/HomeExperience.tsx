@@ -63,6 +63,13 @@ export function HomeExperience() {
   // Subscribe to localStorage changes
   useEffect(() => subscribe(() => setTick((t) => t + 1)), []);
 
+  // One-time migration: move frames from south wall to east wall (Sprint 2 fix)
+  useEffect(() => {
+    import("@/lib/storage/local").then(({ migrateFramePositions }) => {
+      migrateFramePositions();
+    });
+  }, []);
+
   // Listen for cloud state downloads (triggered by auth bootstrap)
   useEffect(() => {
     const handler = (e: Event) => {
