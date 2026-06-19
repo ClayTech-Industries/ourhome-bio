@@ -52,8 +52,8 @@ export const ROOM_DEFINITIONS: RoomDefinition[] = [
     type: "study",
     wallColors: { north: "#3a2a20", south: "#3a2a20", east: "#4a3528", west: "#3a2a20" },
     lighting: { preset: "evening", intensity: 0.7 },
-    unlocked: false,
-    unlockThreshold: 3,
+    unlocked: true,
+    unlockThreshold: 0,
     description: "The quiet room for deep conversations",
   },
   {
@@ -62,8 +62,8 @@ export const ROOM_DEFINITIONS: RoomDefinition[] = [
     type: "bedroom",
     wallColors: { north: "#2a1f1a", south: "#2a1f1a", east: "#3a2a22", west: "#2a1f1a" },
     lighting: { preset: "night", intensity: 0.5 },
-    unlocked: false,
-    unlockThreshold: 8,
+    unlocked: true,
+    unlockThreshold: 0,
     description: "The vulnerable space — highest privacy",
   },
   {
@@ -72,8 +72,8 @@ export const ROOM_DEFINITIONS: RoomDefinition[] = [
     type: "children",
     wallColors: { north: "#d4c8b8", south: "#d4c8b8", east: "#c9bca8", west: "#d4c8b8" },
     lighting: { preset: "night", intensity: 0.4 },
-    unlocked: false,
-    unlockThreshold: 15,
+    unlocked: true,
+    unlockThreshold: 0,
     description: "The tender space — fragile things",
   },
   {
@@ -82,8 +82,8 @@ export const ROOM_DEFINITIONS: RoomDefinition[] = [
     type: "garden",
     wallColors: { north: "#8aa872", south: "#8aa872", east: "#7a9858", west: "#8aa872" },
     lighting: { preset: "afternoon", intensity: 1.2 },
-    unlocked: false,
-    unlockThreshold: 5,
+    unlocked: true,
+    unlockThreshold: 0,
     description: "Growth, silence, healing",
   },
 ];
