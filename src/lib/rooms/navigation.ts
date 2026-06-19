@@ -26,6 +26,12 @@ export interface RoomDefinition {
 }
 
 export const ROOM_DEFINITIONS: RoomDefinition[] = [
+  // NOTE: All rooms currently unlocked for dev testing.
+  // PRODUCTION: Room unlocking is based on SUBSCRIPTION PLAN tiers,
+  // NOT memory count. Doors have light shining under/around them when
+  // a room becomes available — no popup, just light under the door.
+  // (Principle 3: The room IS the interface)
+  // TODO: Re-wire unlockThreshold to subscription tier system.
   {
     slug: "living_room",
     name: "Living Room",
