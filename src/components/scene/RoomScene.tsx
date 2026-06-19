@@ -72,6 +72,10 @@ export function RoomScene({ roomType, position = [0, 0, 0], rotation = [0, 0, 0]
  * The GLB models only contain furniture, so we need to build the
  * room enclosure around them. Garden has no shell (outdoor).
  */
+type LightPreset = {
+  ambient: string; ambientI: number; dir: string; dirI: number; point: string; pointI: number;
+};
+
 function RoomShell({ roomType }: { roomType: RoomType }) {
   const ROOM_W = 6;
   const ROOM_D = 6;
@@ -86,7 +90,7 @@ function RoomShell({ roomType }: { roomType: RoomType }) {
   const wallColor = wallColors[roomType] ?? "#E8D5B7";
 
   // Lighting per room
-  const lightingPresets: Partial<Record<RoomType, { ambient: string; ambientI: number; dir: string; dirI: number; point: string; pointI: number }> = {
+  const lightingPresets: Record<string, LightPreset> = {
     study: { ambient: "#FFD9B0", ambientI: 0.35, dir: "#FF9A6A", dirI: 0.6, point: "#FFB080", pointI: 0.8 },
     bedroom: { ambient: "#3A2A1F", ambientI: 0.15, dir: "#5A4030", dirI: 0.2, point: "#D49560", pointI: 1.2 },
     children: { ambient: "#d4c8b8", ambientI: 0.25, dir: "#FFD9A8", dirI: 0.4, point: "#FFC58A", pointI: 0.6 },
