@@ -20,6 +20,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SceneCanvas } from "@/components/scene/SceneCanvas";
 import { LivingRoom } from "@/components/scene/LivingRoom";
 import { Kitchen } from "@/components/scene/Kitchen";
+import { RoomScene } from "@/components/scene/RoomScene";
 import { MemoryDetailPanel } from "@/components/MemoryDetailPanel";
 import { ChatPanel, type ChatPanelHandle, type ChatTurn } from "@/components/chat/ChatPanel";
 import type {
@@ -353,7 +354,7 @@ export function HomeExperience() {
       {/* Scene */}
       <div className="absolute inset-0">
         <SceneCanvas>
-          {currentRoomSlug === "kitchen" ? (
+          {room?.type === "kitchen" ? (
             <Kitchen
               room={room}
               memoryObjects={memoryObjects}
@@ -364,7 +365,7 @@ export function HomeExperience() {
               presence={presence}
               key={tick}
             />
-          ) : (
+          ) : room?.type === "living_room" ? (
             <LivingRoom
               room={room}
               memoryObjects={memoryObjects}
@@ -375,6 +376,9 @@ export function HomeExperience() {
               presence={presence}
               key={tick}
             />
+          ) : (
+            // Study, Bedroom, Garden, Children's Room — use GLB model scene
+            <RoomScene roomType={room?.type ?? "living_room"} key={tick} />
           )}
         </SceneCanvas>
       </div>
