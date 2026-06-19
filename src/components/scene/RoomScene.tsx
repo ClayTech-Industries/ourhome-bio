@@ -35,10 +35,10 @@ function ModelLoader({ path, position = [0, 0, 0], rotation = [0, 0, 0], scale =
   return <primitive object={cloned} position={position} rotation={rotation} scale={scale} />;
 }
 
-const ROOM_MODELS: Partial<Record<RoomType, string>> = {
-  study: "/models/study.glb",
-  bedroom: "/models/bedroom.glb",
-  garden: "/models/garden.glb",
+const ROOM_MODELS: Partial<Record<RoomType, { path: string; position: [number, number, number]; rotation: [number, number, number]; scale?: [number, number, number] }>> = {
+  study: { path: "/models/study.glb", position: [0, 0, 0], rotation: [0, Math.PI / 2, 0] },
+  bedroom: { path: "/models/bedroom.glb", position: [0, 0, -1], rotation: [0, 0, 0] },
+  garden: { path: "/models/garden.glb", position: [0, 0, 0], rotation: [0, 0, 0] },
 };
 
 // Preload all room models
@@ -47,12 +47,10 @@ useGLTF.preload("/models/bedroom.glb");
 useGLTF.preload("/models/garden.glb");
 
 export function RoomScene({ roomType, position = [0, 0, 0], rotation = [0, 0, 0], scale = [1, 1, 1] }: RoomSceneProps) {
-  const modelPath = ROOM_MODELS[roomType];
+  const modelConfig = ROOM_MODELS[roomType];
   const isGarden = roomType === "garden";
 
-  if (!modelPath) {
-    // Living Room and Kitchen use their own component (LivingRoom.tsx)
-    // Children's Room not yet built — show empty room
+  if (!modelConfig) {
     return null;
   }
 
@@ -61,8 +59,13 @@ export function RoomScene({ roomType, position = [0, 0, 0], rotation = [0, 0, 0]
       {/* Room shell: floor, ceiling, and 4 walls (skip for garden — it's outdoor) */}
       {!isGarden && <RoomShell roomType={roomType} />}
 
-      {/* Furniture from Blender GLB */}
-      <ModelLoader path={modelPath} position={position} rotation={rotation} scale={scale} />
+      {/* Furniture from Blender GLB with per-room position/rotation fixes */}
+      <ModelLoader
+        path={modelConfig.path}
+        position={modelConfig.position}
+        rotation={modelConfig.rotation}
+        scale={modelConfig.scale ?? scale}
+      />
     </Suspense>
   );
 }
