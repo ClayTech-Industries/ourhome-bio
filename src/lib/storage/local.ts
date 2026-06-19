@@ -191,13 +191,14 @@ export function resetHome(): void {
 export function migrateFramePositions(): void {
   const state = read();
   let changed = false;
+
+  // Migrate frame positions
   for (let i = 0; i < state.memoryObjects.length; i++) {
     const obj = state.memoryObjects[i];
-    // Recompute all frame positions with new tighter grid
     const col = i % 5;
     const row = Math.floor(i / 5);
     const newX = 2.93;
-    const newY = 1.3 + row * 0.8;
+    const newY = 1.0 + row * 0.8;
     const newZ = -1.6 + col * 0.75;
     if (obj.position.x !== newX || obj.position.y !== newY || obj.position.z !== newZ) {
       obj.position.x = newX;
@@ -206,6 +207,26 @@ export function migrateFramePositions(): void {
       changed = true;
     }
   }
+
+  // Migrate rooms: add missing rooms for existing homes
+  if (state.home && state.rooms.length < 6) {
+    import("@/lib/rooms/navigation").then(({ createAllRooms }) => {
+      const allRooms = createAllRooms();
+      const existingSlugs = state.rooms.map((r) => r.slug);
+      for (const room of allRooms) {
+        if (!existingSlugs.includes(room.slug)) {
+          state.rooms.push(room);
+          changed = true;
+        }
+      }
+      if (changed) {
+        write(state);
+        console.log("[OurHome] Added missing rooms to existing home");
+      }
+    });
+    return;
+  }
+
   if (changed) {
     write(state);
     console.log("[OurHome] Migrated memory frames to tighter grid spacing");
@@ -280,7 +301,7 @@ export function captureMemory(input: CaptureInput): { memory: Memory; object: Me
   const row = Math.floor(existingOnWall / 5);
   const position = {
     x: 2.93,
-    y: 1.3 + row * 0.8,
+    y: 1.0 + row * 0.8,
     z: -1.6 + col * 0.75,
   };
 
