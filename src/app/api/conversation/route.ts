@@ -271,13 +271,12 @@ export async function POST(request: NextRequest) {
         }
 
         // 4. House path: proceed with normal streaming chat
+        // The Shield fails open — there is ALWAYS someone stepping through.
+        // If no condition matched (shouldn't happen), default to streaming.
         if (!shouldStreamChat(decision)) {
-          // Safety fallback — should not reach here
-          controller.enqueue(
-            encoder.encode(sseEvent("error", { message: "Routing decision blocked chat" })),
-          );
-          controller.close();
-          return;
+          // This should NOT happen — but if it does, fail open to living consent.
+          // The companion is here. They chose to be here. Let them speak.
+          console.warn("Routing decision fell through — defaulting to living consent stream");
         }
 
         // Emit thinking presence (unless Shield already emitted a presence)
