@@ -123,112 +123,48 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      padding: 0;
-      margin: 0;
+      padding: 8rem 2rem 4rem;
       position: relative;
-      background: transparent;
+      background: var(--dark-brown);
       overflow: hidden;
     }
 
     .hero-bg {
       position: absolute;
       inset: 0;
-      width: 100vw;
-      height: 100vh;
-      background-image: url('/landing-hero.png');
+      background-image: url('/img/landing-page.webp');
       background-size: cover;
       background-position: center center;
-      background-repeat: no-repeat;
       opacity: 1.0;
       pointer-events: none;
       z-index: 0;
+      box-shadow: inset 0 0 120px 80px rgba(61, 43, 31, 0.95),
+                  inset 0 0 60px 40px rgba(61, 43, 31, 0.85);
     }
 
-    .hero::before {
-      content: '';
+    /* Deep vignette around the keyhole */
+    .hero-vignette {
       position: absolute;
       inset: 0;
-      background: radial-gradient(ellipse at center, transparent 60%, rgba(26, 15, 10, 0.3) 88%, rgba(26, 15, 10, 0.6) 100%);
+      background:
+        radial-gradient(ellipse at 50% 40%, transparent 0%, transparent 40%, rgba(61, 43, 31, 0.7) 80%, rgba(61, 43, 31, 0.92) 100%);
       pointer-events: none;
       z-index: 1;
     }
 
-    /* Leaf navigation — left side, subtle */
-    .leaf-nav {
-      position: absolute;
-      left: 2rem;
-      top: 50%;
-      transform: translateY(-50%);
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
-      z-index: 3;
-      opacity: 0;
-      animation: slowFadeIn 3s ease 2s forwards;
-    }
-
-    .leaf-link {
-      display: block;
-      color: var(--gold-shimmer);
-      opacity: 0.5;
-      transition: opacity 0.5s ease, transform 0.3s ease;
-    }
-
-    .leaf-link:hover {
-      opacity: 0.9;
-      transform: translateX(4px);
-    }
-
-    @keyframes slowFadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
+    /* Hero text — slow reveal, darker for readability */
     .hero-content {
       position: relative;
       z-index: 2;
       width: 100%;
-      max-width: none;
-      text-align: center;
-      padding: 2rem;
+      max-width: 1000px;
+      min-height: 70vh;
       pointer-events: none;
     }
 
-    /* Text overlay hidden — words are baked into the image */
-    .threshold-text { display: none; }
-    .hero-cta { display: none; }
-
-    /* Hero section — full viewport, no constraints */
-    .hero {
-      min-height: 100vh;
-      padding: 0;
-      margin: 0;
-    }
-
-    .hero-bg {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      background-image: url('/landing-hero.png');
-      background-size: cover;
-      background-position: center center;
-      background-repeat: no-repeat;
-      opacity: 1.0;
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    /* Faint brush vignette on edges only */
-    .hero::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(ellipse at center, transparent 60%, rgba(26, 15, 10, 0.3) 88%, rgba(26, 15, 10, 0.6) 100%);
-      pointer-events: none;
-      z-index: 1;
-    }
-
+    /* Text overlay visible — words slowly reveal (not pop-in) */
+    .threshold-text { display: block; }
+    .hero-cta { display: block; }
     .threshold-text {
       font-family: 'Cormorant Garamond', serif;
       font-size: clamp(1rem, 2.5vw, 1.5rem);
@@ -244,12 +180,12 @@
       position: absolute;
       animation: slowReveal 4s ease forwards;
       pointer-events: auto;
-      text-shadow: 0 0 20px rgba(212, 175, 122, 0.15);
+      text-shadow: 0 2px 8px rgba(26, 15, 10, 0.9), 0 0 20px rgba(26, 15, 10, 0.7);
     }
 
     @keyframes slowReveal {
       from { opacity: 0; }
-      to { opacity: var(--final-opacity, 0.8); }
+      to { opacity: var(--final-opacity, 0.95); }
     }
 
     /* Scattered positions around the door — each line has unique colour, size, opacity */
@@ -889,6 +825,7 @@
   <!-- HERO / THRESHOLD -->
   <section class="hero">
     <div class="hero-bg"></div>
+    <div class="hero-vignette"></div>
 
     <!-- Leaf links on the left side -->
     <div class="leaf-nav">
