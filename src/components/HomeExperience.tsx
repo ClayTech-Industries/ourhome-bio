@@ -41,6 +41,7 @@ import {
   getMemoryObjects,
   getRoom,
   getRooms,
+  migrateFramePositions,
   pickMemoryForProactiveRecall,
   resetHome,
   setCurrentRoom,
