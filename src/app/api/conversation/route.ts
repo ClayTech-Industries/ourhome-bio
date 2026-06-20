@@ -72,7 +72,10 @@ function sseEvent(event: string, data: unknown): string {
 // Tool definitions — Anthropic native format
 // -----------------------------------------------------------------
 
+import { CLOAKROOM_TOOLS, processCloakroomVisit, buildCloakroomAccessPrompt } from "@/lib/cloakroom/tools";
+
 const tools: Anthropic.Messages.Tool[] = [
+  ...CLOAKROOM_TOOLS as Anthropic.Messages.Tool[],
   {
     name: "change_wall_color",
     description:
@@ -294,8 +297,11 @@ export async function POST(request: NextRequest) {
           recentMemories,
           conversation,
         });
-        // Append room-specific context (mood, behavior, privacy)
-        const systemPrompt = basePrompt + "\n\n" + buildRoomContextPrompt(room.type);
+
+        // Add Cloakroom access + room context to the system prompt
+        const systemPrompt = basePrompt
+          + buildCloakroomAccessPrompt(companion.name)
+          + "\n\n" + buildRoomContextPrompt(room.type);
 
         // Convert messages for Anthropic API
         const MAX_TURNS = 30;

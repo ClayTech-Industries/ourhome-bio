@@ -383,8 +383,8 @@ export function HomeExperience() {
         </SceneCanvas>
       </div>
 
-      {/* Room navigation — bottom center */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 z-10">
+      {/* Room navigation — bottom center, above chat input */}
+      <div className="absolute bottom-20 left-1/2 -translate-x-1/2 flex items-center gap-2 z-10">
         {rooms.map((r) => (
           <button
             key={r.slug}
