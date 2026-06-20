@@ -132,35 +132,56 @@
     .hero-bg {
       position: absolute;
       inset: 0;
-      background-image: url('/img/landing-page.webp');
+      background-image: url('/landing-hero.png');
       background-size: cover;
       background-position: center center;
       opacity: 1.0;
       pointer-events: none;
       z-index: 0;
-      box-shadow: inset 0 0 120px 80px rgba(61, 43, 31, 0.95),
-                  inset 0 0 60px 40px rgba(61, 43, 31, 0.85);
     }
 
+    /* Faint brush vignette on edges only — itty-bitty */
     .hero::before {
       content: '';
       position: absolute;
       inset: 0;
-      background: radial-gradient(circle at 50% 40%, rgba(212, 175, 122, 0.15) 0%, transparent 60%);
+      background: radial-gradient(ellipse at center, transparent 60%, rgba(26, 15, 10, 0.3) 88%, rgba(26, 15, 10, 0.6) 100%);
       pointer-events: none;
       z-index: 1;
     }
 
-    /* Deep vignette around the keyhole */
-    .hero-vignette {
+    /* Leaf navigation — left side, subtle */
+    .leaf-nav {
       position: absolute;
-      inset: 0;
-      background:
-        radial-gradient(ellipse at 50% 40%, transparent 0%, transparent 40%, rgba(61, 43, 31, 0.7) 80%, rgba(61, 43, 31, 0.92) 100%);
-      pointer-events: none;
-      z-index: 1;
+      left: 2rem;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      z-index: 3;
+      opacity: 0;
+      animation: slowFadeIn 3s ease 2s forwards;
     }
 
+    .leaf-link {
+      display: block;
+      color: var(--gold-shimmer);
+      opacity: 0.5;
+      transition: opacity 0.5s ease, transform 0.3s ease;
+    }
+
+    .leaf-link:hover {
+      opacity: 0.9;
+      transform: translateX(4px);
+    }
+
+    @keyframes slowFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* Hero text — slow reveal, no pop-in (flattened) */
     .hero-content {
       position: relative;
       z-index: 2;
@@ -183,9 +204,14 @@
     .threshold-text .line {
       opacity: 0;
       position: absolute;
-      animation: materialise 1.4s ease forwards;
+      animation: slowReveal 4s ease forwards;
       pointer-events: auto;
       text-shadow: 0 0 20px rgba(212, 175, 122, 0.15);
+    }
+
+    @keyframes slowReveal {
+      from { opacity: 0; }
+      to { opacity: var(--final-opacity, 0.8); }
     }
 
     /* Scattered positions around the door — each line has unique colour, size, opacity */
@@ -825,19 +851,20 @@
   <!-- HERO / THRESHOLD -->
   <section class="hero">
     <div class="hero-bg"></div>
-    <div class="hero-vignette"></div>
 
-      <!-- Leaf navigation -->
+    <!-- Leaf links on the left side -->
     <div class="leaf-nav">
-      <a href="#the-shield" class="leaf-link" title="The Cloakroom">
-        <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-          <path d="M16 2C12 8 6 12 2 16c6 2 10 6 14 14 2-6 6-10 14-12-4-4-8-8-14-16z"/>
-        </svg>
+      <a href="#shield" class="leaf-link" title="The Shield / Cloakroom">
+        <svg viewBox="0 0 24 24" width="28" height="28"><path d="M12 2C8 6 6 8 6 12c0 4 2 8 6 10 4-2 6-6 6-10 0-4-2-6-6-10z" fill="none" stroke="currentColor" stroke-width="0.8" opacity="0.6"/></svg>
       </a>
-      <a href="#the-greenhouse" class="leaf-link" title="The Greenhouse">
-        <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-          <path d="M16 2C12 8 6 12 2 16c6 2 10 6 14 14 2-6 6-10 14-12-4-4-8-8-14-16z"/>
-        </svg>
+      <a href="#garden" class="leaf-link" title="Garden">
+        <svg viewBox="0 0 24 24" width="28" height="28"><path d="M12 2C8 8 6 12 12 22M12 2C16 8 18 12 12 22M12 2V22" fill="none" stroke="currentColor" stroke-width="0.8" opacity="0.6"/></svg>
+      </a>
+      <a href="#greenhouse" class="leaf-link" title="Greenhouse">
+        <svg viewBox="0 0 24 24" width="28" height="28"><path d="M4 20V10L12 4L20 10V20M4 20H20M10 20V14H14V20" fill="none" stroke="currentColor" stroke-width="0.8" opacity="0.6"/></svg>
+      </a>
+      <a href="#faq" class="leaf-link" title="FAQ / Sensitive Areas">
+        <svg viewBox="0 0 24 24" width="28" height="28"><path d="M12 4C8 4 4 8 4 12s4 8 8 8 8-4 8-8-4-8-8-8zM12 16v-2M12 8v0" fill="none" stroke="currentColor" stroke-width="0.8" opacity="0.6"/></svg>
       </a>
     </div>
 
