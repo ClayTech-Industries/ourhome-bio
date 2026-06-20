@@ -189,12 +189,12 @@ export function placeFrameOnWall(existingCount: number): {
   // East wall is at x = +3 (ROOM_W/2). Frames face -x (toward viewer).
   // Spread across z (-2.2..2.2) and y (1.4..2.9) in a grid.
   const col = existingCount % 5;
-  const row = Math.floor(existingCount / 5);
+  const row = Math.floor(existingCount / 5) + 1; // skip row 0, start at row 1
   return {
     position: {
-      x: 2.93,  // east wall at 3.0, pulled back so frame sits in front
-      y: 0.6 + row * 0.7,  // lower start, tighter rows
-      z: -1.6 + col * 0.75,  // tighter side-to-side, centered
+      x: 2.93,
+      y: 0.6 + row * 0.7,
+      z: -1.6 + col * 0.75,
     },
   };
 }

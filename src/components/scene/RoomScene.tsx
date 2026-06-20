@@ -37,7 +37,7 @@ function ModelLoader({ path, position = [0, 0, 0], rotation = [0, 0, 0], scale =
 
 const ROOM_MODELS: Partial<Record<RoomType, { path: string; position: [number, number, number]; rotation: [number, number, number]; scale?: [number, number, number] }>> = {
   study: { path: "/models/study.glb", position: [0, 0, 0], rotation: [0, Math.PI / 2, 0] },
-  bedroom: { path: "/models/bedroom.glb", position: [0, 0, -1], rotation: [0, 0, 0] },
+  bedroom: { path: "/models/bedroom.glb", position: [0, 0, -1], rotation: [0, Math.PI, 0] },
   garden: { path: "/models/garden.glb", position: [0, 0, 0], rotation: [0, 0, 0] },
 };
 

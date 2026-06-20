@@ -196,7 +196,7 @@ export function migrateFramePositions(): void {
   for (let i = 0; i < state.memoryObjects.length; i++) {
     const obj = state.memoryObjects[i];
     const col = i % 5;
-    const row = Math.floor(i / 5);
+    const row = Math.floor(i / 5) + 1; // skip row 0
     const newX = 2.93;
     const newY = 0.6 + row * 0.7;
     const newZ = -1.6 + col * 0.75;
@@ -301,7 +301,7 @@ export function captureMemory(input: CaptureInput): { memory: Memory; object: Me
   const row = Math.floor(existingOnWall / 5);
   const position = {
     x: 2.93,
-    y: 0.6 + row * 0.7,
+    y: 0.6 + (row + 1) * 0.7, // row+1 to skip top row
     z: -1.6 + col * 0.75,
   };
 
