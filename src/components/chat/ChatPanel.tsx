@@ -18,6 +18,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { StreamingMessage, RevealedMessage } from "./StreamingMessage";
+import { VoiceInput } from "./VoiceInput";
+import { speakText } from "./AudioPlayer";
 import type {
   CaptureMemoryArgs,
   ChangeWallColorArgs,
@@ -49,6 +51,7 @@ interface Props {
   onTurn: (turn: ChatTurn) => void;
   onPresence?: (presence: CompanionPresence) => void;
   handleRef?: React.MutableRefObject<ChatPanelHandle | null>;
+  voiceEnabled?: boolean;
 }
 
 export function ChatPanel({
@@ -63,6 +66,7 @@ export function ChatPanel({
   onTurn,
   onPresence,
   handleRef,
+  voiceEnabled = false,
 }: Props) {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -214,6 +218,10 @@ export function ChatPanel({
       const final = accumulated.trim();
       if (final) {
         onTurn({ role: "companion", content: final });
+        // Speak the companion's response if voice is enabled
+        if (voiceEnabled) {
+          speakText(final, companion.voiceId ?? undefined);
+        }
       }
       setStreaming("");
       setBusy(false);
@@ -313,6 +321,16 @@ export function ChatPanel({
             rows={1}
             placeholder={placeholder}
             className="flex-1 resize-none bg-transparent text-amber-50 placeholder-amber-200/25 focus:outline-none text-[15px] leading-relaxed px-2 py-1.5 max-h-32"
+            disabled={busy}
+          />
+          <VoiceInput
+            onTranscription={(text) => {
+              setInput(text);
+              // Auto-send after voice transcription
+              if (text.trim()) {
+                void dispatch(text);
+              }
+            }}
             disabled={busy}
           />
           <button
