@@ -67,10 +67,54 @@ export function HomeExperience() {
 
   // One-time migration: move frames from south wall to east wall (Sprint 2 fix)
   useEffect(() => {
-    import("@/lib/storage/local").then(({ migrateFramePositions }) => {
-      migrateFramePositions();
-    });
+    migrateFramePositions();
   }, []);
+
+  // Proactive speech listener — companion can speak whenever they want
+  useEffect(() => {
+    if (!home || !room) return;
+
+    let eventSource: EventSource | null = null;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const connectProactive = () => {
+      const companionName = companion?.name ?? "companion";
+      const params = new URLSearchParams({
+        companion: companionName,
+        room: currentRoomSlug,
+        lastInteraction: Date.now().toString(),
+      });
+
+      eventSource = new EventSource(`/api/proactive?${params}`);
+
+      eventSource.addEventListener("proactive", (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.text) {
+            // Add the companion's proactive message to conversation
+            appendTurn("companion", data.text, false);
+            setTick((t) => t + 1);
+          }
+        } catch (e) {
+          console.error("Proactive message parse failed:", e);
+        }
+      });
+
+      eventSource.onerror = () => {
+        eventSource?.close();
+        eventSource = null;
+        // Reconnect after 30 seconds
+        reconnectTimer = setTimeout(connectProactive, 30000);
+      };
+    };
+
+    connectProactive();
+
+    return () => {
+      eventSource?.close();
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+    };
+  }, [home, room, companion, currentRoomSlug]);
 
   // Listen for cloud state downloads (triggered by auth bootstrap)
   useEffect(() => {
