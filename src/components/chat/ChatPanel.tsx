@@ -308,7 +308,7 @@ export function ChatPanel({
           }
           return (
             <div
-              key={i}
+              key={`${i}-${turn.role}-${turn.content.slice(0, 20)}`}
               className={
                 turn.role === "user"
                   ? "text-amber-50/90 text-[15px] leading-relaxed"

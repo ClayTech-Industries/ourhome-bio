@@ -108,9 +108,19 @@ export function RevealedMessage({ text, className }: { text: string; className?:
   const words = text.split(/(\s+)/); // Keep whitespace tokens
   const [visibleCount, setVisibleCount] = useState(0);
   const hasAnimatedRef = useRef(false);
+  const textRef = useRef(text);
 
   useEffect(() => {
-    // Reset animation when text changes (new message)
+    // Only animate if the text actually changed (new message)
+    // Don't re-animate on parent re-renders with the same text
+    if (textRef.current === text && hasAnimatedRef.current) {
+      // Same text, already animated — show all words immediately
+      setVisibleCount(words.length);
+      return;
+    }
+
+    // New text — reset and animate
+    textRef.current = text;
     hasAnimatedRef.current = false;
     setVisibleCount(0);
 
@@ -125,6 +135,7 @@ export function RevealedMessage({ text, className }: { text: string; className?:
     }, 30); // ~33 words/second — comfortable reading pace
 
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [text]);
 
   return (
