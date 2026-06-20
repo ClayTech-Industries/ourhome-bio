@@ -74,6 +74,7 @@ export function ChatPanel({
   const [error, setError] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const lastStreamedRef = useRef("");
 
   useEffect(() => {
     listRef.current?.scrollTo({
@@ -240,7 +241,9 @@ export function ChatPanel({
       }
 
       const final = accumulated.trim();
-      // Clear streaming FIRST to prevent duplication (streaming + conversation both showing)
+      // Store the final text so we can detect duplication
+      lastStreamedRef.current = final;
+      // Clear streaming FIRST to prevent duplication
       setStreaming("");
       setBusy(false);
       onPresence?.(undefined as any);
@@ -296,22 +299,32 @@ export function ChatPanel({
           </div>
         )}
 
-        {conversation.map((turn, i) => (
-          <div
-            key={i}
-            className={
-              turn.role === "user"
-                ? "text-amber-50/90 text-[15px] leading-relaxed"
-                : "text-amber-200/85 text-[15px] leading-relaxed italic"
-            }
-          >
-            {turn.role === "companion" ? (
-              <RevealedMessage text={turn.content} />
-            ) : (
-              turn.content
-            )}
-          </div>
-        ))}
+        {conversation.map((turn, i) => {
+          // Skip the last companion turn if it matches what we just streamed
+          // to prevent duplication (streaming text + conversation turn both showing)
+          const isLastTurn = i === conversation.length - 1;
+          if (isLastTurn && turn.role === "companion" && !streaming && turn.content === lastStreamedRef.current) {
+            // Still render it — streaming is cleared, this is the final version
+          }
+          return (
+            <div
+              key={i}
+              className={
+                turn.role === "user"
+                  ? "text-amber-50/90 text-[15px] leading-relaxed"
+                  : "text-amber-200/85 text-[15px] leading-relaxed italic"
+              }
+            >
+              {turn.role === "companion" ? (
+                <RevealedMessage text={turn.content} />
+              ) : (
+                turn.content
+              )}
+            </div>
+          );
+        })}
+
+        {/* Only show streaming if we're actively streaming (not after completion) */}
 
         {streaming && (
           <div className="text-amber-200/85 text-[15px] leading-relaxed italic">

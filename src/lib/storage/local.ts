@@ -196,10 +196,13 @@ export function migrateFramePositions(): void {
   for (let i = 0; i < state.memoryObjects.length; i++) {
     const obj = state.memoryObjects[i];
     const col = i % 5;
-    const row = Math.floor(i / 5) + 1; // skip row 0
+    const row = Math.floor(i / 5);
+    const maxRows = 3;
+    const actualRow = row % maxRows;
+    const colGroup = Math.floor(row / maxRows);
     const newX = 2.93;
-    const newY = 0.6 + row * 0.7;
-    const newZ = -1.6 + col * 0.75;
+    const newY = 0.5 + actualRow * 0.65;
+    const newZ = -1.6 + col * 0.75 + colGroup * 0.1;
     if (obj.position.x !== newX || obj.position.y !== newY || obj.position.z !== newZ) {
       obj.position.x = newX;
       obj.position.y = newY;
@@ -299,10 +302,13 @@ export function captureMemory(input: CaptureInput): { memory: Memory; object: Me
   const existingOnWall = state.memoryObjects.length;
   const col = existingOnWall % 5;
   const row = Math.floor(existingOnWall / 5);
+  const maxRows = 3;
+  const actualRow = row % maxRows;
+  const colGroup = Math.floor(row / maxRows);
   const position = {
     x: 2.93,
-    y: 0.6 + (row + 1) * 0.7, // row+1 to skip top row
-    z: -1.6 + col * 0.75,
+    y: 0.5 + actualRow * 0.65,
+    z: -1.6 + col * 0.75 + colGroup * 0.1,
   };
 
   const object: MemoryObject = {

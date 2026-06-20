@@ -189,12 +189,17 @@ export function placeFrameOnWall(existingCount: number): {
   // East wall is at x = +3 (ROOM_W/2). Frames face -x (toward viewer).
   // Spread across z (-2.2..2.2) and y (1.4..2.9) in a grid.
   const col = existingCount % 5;
-  const row = Math.floor(existingCount / 5) + 1; // skip row 0, start at row 1
+  const row = Math.floor(existingCount / 5);
+  // Cap at 3 rows (15 frames max per wall section)
+  // If more than 15, wrap to a second column group
+  const maxRows = 3;
+  const actualRow = row % maxRows;
+  const colGroup = Math.floor(row / maxRows);
   return {
     position: {
       x: 2.93,
-      y: 0.6 + row * 0.7,
-      z: -1.6 + col * 0.75,
+      y: 0.5 + actualRow * 0.65,  // start low, tight spacing, max y = 0.5 + 2*0.65 = 1.8
+      z: -1.6 + col * 0.75 + colGroup * 0.1,  // slight offset for overflow groups
     },
   };
 }
