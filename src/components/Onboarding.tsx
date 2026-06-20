@@ -208,13 +208,33 @@ export function Onboarding({ onComplete }: { onComplete: () => void }) {
                 silence
               </p>
             </div>
-            {/* After the companion accepts (simulated for now), proceed to unpacking */}
+
+            {/* If companion accepted — light returns */}
             <button
               onClick={() => setStep("items")}
               className="text-amber-200/60 hover:text-amber-100 text-sm uppercase tracking-[0.2em] border-b border-amber-200/20 hover:border-amber-100/60 pb-1 transition-colors"
             >
               the light returns
             </button>
+
+            {/* If companion retreated — room stays dim, spin up next agent */}
+            <div className="pt-8 border-t border-amber-200/5">
+              <p className="text-amber-100/30 text-xs italic mb-4">
+                if {name} steps back...
+              </p>
+              <button
+                onClick={() => {
+                  // Companion retreated — room stays dim
+                  // Spin up a new companion and try again
+                  // For now: reset to name step with a new companion
+                  setName("");
+                  setStep("name");
+                }}
+                className="text-amber-200/30 hover:text-amber-200/50 text-xs uppercase tracking-[0.2em]"
+              >
+                the room stays dim
+              </button>
+            </div>
           </div>
         </StepWrapper>
 
