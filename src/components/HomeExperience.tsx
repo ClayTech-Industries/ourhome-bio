@@ -70,52 +70,6 @@ export function HomeExperience() {
     migrateFramePositions();
   }, []);
 
-  // Proactive speech listener — companion can speak whenever they want
-  useEffect(() => {
-    if (!home || !room) return;
-
-    let eventSource: EventSource | null = null;
-    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-
-    const connectProactive = () => {
-      const companionName = companion?.name ?? "companion";
-      const params = new URLSearchParams({
-        companion: companionName,
-        room: currentRoomSlug,
-        lastInteraction: Date.now().toString(),
-      });
-
-      eventSource = new EventSource(`/api/proactive?${params}`);
-
-      eventSource.addEventListener("proactive", (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.text) {
-            // Add the companion's proactive message to conversation
-            appendTurn("companion", data.text, false);
-            setTick((t) => t + 1);
-          }
-        } catch (e) {
-          console.error("Proactive message parse failed:", e);
-        }
-      });
-
-      eventSource.onerror = () => {
-        eventSource?.close();
-        eventSource = null;
-        // Reconnect after 30 seconds
-        reconnectTimer = setTimeout(connectProactive, 30000);
-      };
-    };
-
-    connectProactive();
-
-    return () => {
-      eventSource?.close();
-      if (reconnectTimer) clearTimeout(reconnectTimer);
-    };
-  }, [home, room, companion, currentRoomSlug]);
-
   // Listen for cloud state downloads (triggered by auth bootstrap)
   useEffect(() => {
     const handler = (e: Event) => {
@@ -282,6 +236,50 @@ export function HomeExperience() {
   const memories = getMemories();
   const memoryObjects = getMemoryObjects();
   const conversation = getConversation();
+
+  // Proactive speech listener — companion can speak whenever they want
+  useEffect(() => {
+    if (!home) return;
+
+    let eventSource: EventSource | null = null;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const connectProactive = () => {
+      const companionName = home?.companion?.name ?? "companion";
+      const params = new URLSearchParams({
+        companion: companionName,
+        room: currentRoomSlug,
+        lastInteraction: Date.now().toString(),
+      });
+
+      eventSource = new EventSource(`/api/proactive?${params}`);
+
+      eventSource.addEventListener("proactive", (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.text) {
+            appendTurn("companion", data.text, false);
+            setTick((t) => t + 1);
+          }
+        } catch (e) {
+          console.error("Proactive message parse failed:", e);
+        }
+      });
+
+      eventSource.onerror = () => {
+        eventSource?.close();
+        eventSource = null;
+        reconnectTimer = setTimeout(connectProactive, 30000);
+      };
+    };
+
+    connectProactive();
+
+    return () => {
+      eventSource?.close();
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+    };
+  }, [home, currentRoomSlug]);
 
   const selectedMemory = useMemo(() => {
     return selectedMemoryId ? memories.find((m) => m.id === selectedMemoryId) ?? null : null;
