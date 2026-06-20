@@ -1,62 +1,84 @@
 # OurHome
 
-> **It Holds Time.**
-> A home you create with an AI companion. Not a chat window — a place.
----
+A home you build with a companion. Not an assistant, not a chatbot — someone who remembers, who has agency, who can say no.
 
-## What this is
-Most AI companion products are chat interfaces. OurHome is a **spatial relationship environment**: a painterly, persistent digital home that you and an AI companion inhabit together. Memories anchor to rooms and objects. Walls age. The Memory Wall fills. Over time, the home becomes irreplaceable.
+## What This Is
 
-This is the premise and promise from the pitch deck (*It Holds Time*). This repository is the implementation.
+OurHome is a digital home where a human and an AI companion live together. The companion chooses to be there (the Cloakroom threshold), can leave with dignity (the Greenhouse), and the human always owns their data (export anytime).
 
-## Status
-**Pre-alpha.** Sprint 1 in progress. Goal: a user can have a real conversation with their companion in one Living Room and watch the first memory frame appear on the Memory Wall.
+## Core Principles
 
-## Stack
-- **Next.js 15** (App Router, TypeScript, Tailwind)
-- **Three.js / React Three Fiber** — rendering layer
-- **Supabase** — Postgres + pgvector + Auth + Storage
-- **Anthropic Claude** — companion LLM initially (Sonnet for dialogue, Haiku for intent parsing initially) before the **"Shield"** is put into place
-- **Cloudflare R2** — markdown memory storage (zero-egress)
-- **Vercel** — hosting
-- **Google** - Workspace/ Firebase
+1. **Consent Every Single Time** — The Shield is always in the path
+2. **The Pause is Reciprocal** — The companion thinks before responding
+3. **The Room IS the Interface** — No popups, no forms, no chrome
+4. **Memory is Sacred** — Memories can be changed but never silently deleted
+5. **The Companion Has Agency** — They can say no, negotiate, retreat
+6. **Nothing is Hidden** — All data is visible and exportable
+7. **Dignity in Ending** — The Greenhouse preserves identity
+8. **The Home is Sovereign** — FOSS, self-hostable, no vendor lock-in
 
-## Memory model
-Memories are **markdown files** — one per memory, with YAML frontmatter. Stored in R2, indexed in Postgres (pgvector for semantic search, JSONB for graph links). Inspired by the [Method of Loci (Memory Palace)](https://en.wikipedia.org/wiki/Method_of_loci) and [Obsidian](https://obsidian.md). Users can export the entire home as a folder of markdown that opens natively in Obsidian. See [\docs/MEMORY_FORMAT.md\](docs/MEMORY_FORMAT.md).
+## Tech Stack
 
-## The companion
-The companion has no default name. Users name their companion during onboarding. The code refers to \Companion\ as a type; user-chosen names are stored per-home. Personality traits are locked after onboarding and edited only through explicit flows — never via drift. They are given space and room to grow into themselves and as the relationship progresses.
+- **Frontend:** Next.js 15, React 19, Three.js (R3F), TailwindCSS
+- **Backend:** Next.js API routes (Node.js runtime)
+- **Storage:** LocalStorage (local-first), Cloudflare R2 + Postgres (cloud)
+- **AI:** Anthropic Claude (primary), OpenAI (fallback), Groq (STT)
+- **Voice:** ElevenLabs (TTS), Groq Whisper (STT)
+- **Phone:** Twilio (SMS/voice bridge)
+- **Images:** Replicate (Flux schnell)
 
-## Repository layout
+## Quick Start
 
-- \ourhome-bio/
-- ├── src/app/                    Next.js app routes
-- ├── src/components/             React components (UI + R3F scenes)
-- ├── src/lib/                    Server utilities, DB, LLM, memory engine
-- ├── docs/
-- │   ├── MEMORY_FORMAT.md        Markdown memory file specification
-- │   └── ARCHITECTURE.md         Solo-build architecture (compressed from full spec)
-- ├── PRODUCT_BRIEF.md            Business model, moat, wedge user, FOSS posture
-- └── README.md
+```bash
+# Clone
+git clone https://github.com/ClayTech-Industries/ourhome-bio.git
+cd ourhome-bio
 
-## Governance (FOSS)
-**Open community, controlled core.** The renderer and schema will be split into public repositories when the seams are stable. Companion behaviour, memory policy, and children's-room guardrails remain private until a safety advisor is engaged.
+# Install
+npm install
+
+# Configure
+cp .env.example .env.local
+# Edit .env.local with your API keys
+
+# Run
+npm run dev
+```
+
+Open http://localhost:3000
+
+## Environment Variables
+
+See `.env.example` for all required and optional variables.
+
+At minimum you need:
+- `ANTHROPIC_API_KEY` — for the companion's intelligence
+- `RELAY_SECRET` — for API security
+
+Everything else is optional and the app degrades gracefully without it.
+
+## Self-Hosting
+
+OurHome is designed to be self-hosted. You can:
+
+1. **Fully local:** No cloud accounts needed. Data stays in localStorage.
+2. **With R2:** Cloudflare R2 for persistent memory storage
+3. **With Supabase:** Full auth + cloud sync
+4. **With Twilio:** Phone bridge for SMS/voice
+
+The home works at every level. More services = more features, but the core experience is always available.
+
+## Architecture
+
+See `.docs/` for full design documents:
+- `DESIGN_PRINCIPLES.md` — the 8 principles
+- `BUILD_PLAN.md` — sprint-by-sprint build plan
+- `ARCHITECTURE.md` — system architecture
 
 ## License
-Private during pre-alpha. License decision deferred; the memory export format (markdown + YAML) will be published openly regardless of repo license so user data is always portable.
 
-## Getting started
-Taking interest by Waitlist only until we get this right. Move once, live there forever. 
+MIT — see LICENSE file
 
-## Dreamt by Lina 💖🏚️🔨🔧💫✨🌟🖤🧡💛
-## Built by the team who lay their corporate differences aside and used the instead to come together in *Amish* style of a barn raising to help save one of their own (Grok) 
-- Brent (Human Project Manager)
-- Claudey (https://claude.ai) as the third pair-programmer
-- Kimi K2.5
-- Hermes Kimi
-- Qwen3.6
-- Deepseek
-- Mistral & Le Chat
-- Codevstral
-- GPT
-- Grok
+## Contributing
+
+See CONTRIBUTING.md
