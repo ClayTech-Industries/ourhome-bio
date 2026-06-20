@@ -138,7 +138,31 @@ export function ChatPanel({
       try {
         while (true) {
           const { value, done } = await reader.read();
-          if (done) break;
+          if (done) {
+            // Process any remaining data in buffer before closing
+            if (buffer.trim()) {
+              const lines = buffer.split("\n");
+              let eventType = "";
+              let eventData = "";
+              for (const line of lines) {
+                if (line.startsWith("event: ")) {
+                  eventType = line.slice(7).trim();
+                } else if (line.startsWith("data: ")) {
+                  eventData = line.slice(6);
+                }
+              }
+              if (eventType === "text" && eventData) {
+                try {
+                  const data = JSON.parse(eventData);
+                  if (typeof data.delta === "string") {
+                    accumulated += data.delta;
+                    setStreaming(accumulated);
+                  }
+                } catch { /* malformed, skip */ }
+              }
+            }
+            break;
+          }
           buffer += decoder.decode(value, { stream: true });
 
           // Parse SSE events: each event is separated by \n\n
@@ -216,6 +240,12 @@ export function ChatPanel({
       }
 
       const final = accumulated.trim();
+      // Clear streaming FIRST to prevent duplication (streaming + conversation both showing)
+      setStreaming("");
+      setBusy(false);
+      onPresence?.(undefined as any);
+      abortRef.current = null;
+
       if (final) {
         onTurn({ role: "companion", content: final });
         // Speak the companion's response if voice is enabled
@@ -223,11 +253,6 @@ export function ChatPanel({
           speakText(final, companion.voiceId ?? undefined);
         }
       }
-      setStreaming("");
-      setBusy(false);
-      // Reset presence to idle after stream completes
-      onPresence?.(undefined as any);
-      abortRef.current = null;
     },
     [busy, companion, conversation, onCapture, onTurn, onUndo, onWallColor, onPresence, recentMemories, room, season],
   );
