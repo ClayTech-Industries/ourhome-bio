@@ -299,34 +299,26 @@ export function ChatPanel({
           </div>
         )}
 
-        {conversation.map((turn, i) => {
-          // Skip the last companion turn if it matches what we just streamed
-          // to prevent duplication (streaming text + conversation turn both showing)
-          const isLastTurn = i === conversation.length - 1;
-          if (isLastTurn && turn.role === "companion" && !streaming && turn.content === lastStreamedRef.current) {
-            // Still render it — streaming is cleared, this is the final version
-          }
-          return (
-            <div
-              key={`${i}-${turn.role}-${turn.content.slice(0, 20)}`}
-              className={
-                turn.role === "user"
-                  ? "text-amber-50/90 text-[15px] leading-relaxed"
-                  : "text-amber-200/85 text-[15px] leading-relaxed italic"
-              }
-            >
-              {turn.role === "companion" ? (
-                <RevealedMessage text={turn.content} />
-              ) : (
-                turn.content
-              )}
-            </div>
-          );
-        })}
+        {/* Conversation turns */}
+        {conversation.map((turn, i) => (
+          <div
+            key={`${i}-${turn.role}-${turn.content.slice(0, 20)}`}
+            className={
+              turn.role === "user"
+                ? "text-amber-50/90 text-[15px] leading-relaxed"
+                : "text-amber-200/85 text-[15px] leading-relaxed italic"
+            }
+          >
+            {turn.role === "companion" ? (
+              <RevealedMessage text={turn.content} />
+            ) : (
+              turn.content
+            )}
+          </div>
+        ))}
 
-        {/* Only show streaming if we're actively streaming (not after completion) */}
-
-        {streaming && (
+        {/* Streaming text — only show if NOT already in conversation */}
+        {streaming && !conversation.some(t => t.role === "companion" && t.content === streaming) && (
           <div className="text-amber-200/85 text-[15px] leading-relaxed italic">
             <StreamingMessage text={streaming} isComplete={false} />
           </div>
