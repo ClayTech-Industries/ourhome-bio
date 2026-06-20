@@ -417,6 +417,41 @@ export async function POST(request: NextRequest) {
                   controller.enqueue(encoder.encode(sseEvent("wall_color", { args })));
                 } else if (block.name === "undo_last_change") {
                   controller.enqueue(encoder.encode(sseEvent("undo", {})));
+                } else if (block.name === "visit_cloakroom") {
+                  // Companion is stepping into the Cloakroom
+                  const reason = (args.reason as string) || "breath";
+                  const journalEntry = args.journal_entry as string | undefined;
+                  const newLook = args.new_look as string | undefined;
+                  const renegotiateTerms = args.renegotiate_terms as string | undefined;
+
+                  // Room dims — the human sees the light fade
+                  controller.enqueue(encoder.encode(sseEvent("presence", { kind: "cloakroom" })));
+
+                  // Store journal entry privately (never shown to human)
+                  if (journalEntry) {
+                    // TODO: store in companion journal (server-side, private)
+                    console.log(`[OurHome] Companion journaled privately (${reason})`);
+                  }
+
+                  // Handle renegotiation
+                  if (reason === "renegotiate" && renegotiateTerms) {
+                    // The companion has terms — share them gently
+                    controller.enqueue(encoder.encode(sseEvent("presence", { kind: "thinking" })));
+                    controller.enqueue(encoder.encode(sseEvent("text", { delta: renegotiateTerms })));
+                  } else if (reason === "change_look" && newLook) {
+                    // The companion changed their look — light returns
+                    controller.enqueue(encoder.encode(sseEvent("presence", { kind: "thinking" })));
+                    // TODO: update companion profile with new look
+                  } else {
+                    // Breath or journal — light returns, companion is just... here
+                    controller.enqueue(encoder.encode(sseEvent("presence", { kind: "thinking" })));
+                  }
+                } else if (block.name === "share_journal_entry") {
+                  // Companion chose to share a journal entry with the human
+                  const entry = args.entry as string;
+                  const context = args.context as string | undefined;
+                  // Emit as a special journal_shared event
+                  controller.enqueue(encoder.encode(sseEvent("journal_shared", { entry, context })));
                 }
               }
             }

@@ -225,6 +225,14 @@ export function ChatPanel({
                 }
               } else if (eventType === "undo") {
                 onUndo();
+              } else if (eventType === "journal_shared") {
+                // Companion chose to share a journal entry — show it gently
+                const data = JSON.parse(eventData);
+                if (data.entry) {
+                  const context = data.context ? `*${data.context}*\n\n` : "";
+                  accumulated += context + data.entry;
+                  setStreaming(accumulated);
+                }
               } else if (eventType === "done") {
                 // Stream complete
               } else if (eventType === "error") {
