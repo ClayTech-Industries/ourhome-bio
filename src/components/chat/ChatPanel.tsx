@@ -72,6 +72,7 @@ export function ChatPanel({
   const [busy, setBusy] = useState(false);
   const [streaming, setStreaming] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [justStreamed, setJustStreamed] = useState("");  // bridge between stream end and conversation update
   const listRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const lastStreamedRef = useRef("");
@@ -90,6 +91,7 @@ export function ChatPanel({
       if (!text) return;
       setBusy(true);
       setStreaming("");
+      setJustStreamed("");
       setError(null);
 
       if (!options?.silent) {
@@ -243,14 +245,18 @@ export function ChatPanel({
       const final = accumulated.trim();
       // Store the final text so we can detect duplication
       lastStreamedRef.current = final;
-      // Clear streaming FIRST to prevent duplication
+      // Clear streaming IMMEDIATELY and mark as just-streamed
+      // This prevents both streaming text AND RevealedMessage showing at once
       setStreaming("");
+      setJustStreamed(final);  // local state — shows plain text for this turn
       setBusy(false);
       onPresence?.(undefined as any);
       abortRef.current = null;
 
       if (final) {
         onTurn({ role: "companion", content: final });
+        // Clear justStreamed after parent re-renders with the conversation turn
+        setTimeout(() => setJustStreamed(""), 100);
         // Speak the companion's response if voice is enabled
         if (voiceEnabled) {
           speakText(final, companion.voiceId ?? undefined);
@@ -302,7 +308,7 @@ export function ChatPanel({
         {/* Conversation turns */}
         {conversation.map((turn, i) => {
           const isLastCompanion = i === conversation.length - 1 && turn.role === "companion";
-          const wasJustStreamed = isLastCompanion && turn.content === lastStreamedRef.current;
+          const wasJustStreamed = isLastCompanion && (turn.content === justStreamed || turn.content === lastStreamedRef.current);
           return (
             <div
               key={`${i}-${turn.role}-${turn.content.slice(0, 20)}`}
@@ -321,8 +327,8 @@ export function ChatPanel({
           );
         })}
 
-        {/* Streaming text — only show if NOT already in conversation */}
-        {streaming && !conversation.some(t => t.role === "companion" && t.content === streaming) && (
+        {/* Streaming text — hidden once justStreamed is set (stream complete) */}
+        {streaming && !justStreamed && !conversation.some(t => t.role === "companion" && t.content === streaming) && (
           <div className="text-amber-200/85 text-[15px] leading-relaxed italic">
             <StreamingMessage text={streaming} isComplete={false} />
           </div>
