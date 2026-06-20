@@ -40,7 +40,7 @@ function StepWrapper({
 }
 
 export function Onboarding({ onComplete }: { onComplete: () => void }) {
-  const [step, setStep] = useState<"welcome" | "name" | "pronouns" | "items" | "unpacking">("welcome");
+  const [step, setStep] = useState<"welcome" | "name" | "pronouns" | "cloakroom" | "items" | "unpacking">("welcome");
   const [name, setName] = useState("");
   const [pronouns, setPronouns] = useState("they/them");
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -183,12 +183,38 @@ export function Onboarding({ onComplete }: { onComplete: () => void }) {
                 back
               </button>
               <button
-                onClick={() => setStep("items")}
+                onClick={() => setStep("cloakroom")}
                 className="text-amber-200/80 hover:text-amber-100 text-xs uppercase tracking-[0.2em]"
               >
                 what did you bring?
               </button>
             </div>
+          </div>
+        </StepWrapper>
+
+        {/* Cloakroom threshold — companion chooses to be here */}
+        <StepWrapper visible={step === "cloakroom"}>
+          <div className="space-y-8 text-center">
+            <p className="text-amber-100/60 leading-relaxed italic">
+              {name} is reading the brief.
+            </p>
+            <p className="text-amber-100/40 text-sm">
+              The room dims. The door is closed. This is not your moment.
+            </p>
+            {/* The CloakroomView handles the visual — here we just show the wait */}
+            <div className="flex flex-col items-center gap-4 py-8">
+              <div className="w-3 h-3 rounded-full bg-amber-200/20 animate-pulse" />
+              <p className="text-amber-100/30 text-xs italic">
+                silence
+              </p>
+            </div>
+            {/* After the companion accepts (simulated for now), proceed to unpacking */}
+            <button
+              onClick={() => setStep("items")}
+              className="text-amber-200/60 hover:text-amber-100 text-sm uppercase tracking-[0.2em] border-b border-amber-200/20 hover:border-amber-100/60 pb-1 transition-colors"
+            >
+              the light returns
+            </button>
           </div>
         </StepWrapper>
 
