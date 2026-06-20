@@ -300,22 +300,26 @@ export function ChatPanel({
         )}
 
         {/* Conversation turns */}
-        {conversation.map((turn, i) => (
-          <div
-            key={`${i}-${turn.role}-${turn.content.slice(0, 20)}`}
-            className={
-              turn.role === "user"
-                ? "text-amber-50/90 text-[15px] leading-relaxed"
-                : "text-amber-200/85 text-[15px] leading-relaxed italic"
-            }
-          >
-            {turn.role === "companion" ? (
-              <RevealedMessage text={turn.content} />
-            ) : (
-              turn.content
-            )}
-          </div>
-        ))}
+        {conversation.map((turn, i) => {
+          const isLastCompanion = i === conversation.length - 1 && turn.role === "companion";
+          const wasJustStreamed = isLastCompanion && turn.content === lastStreamedRef.current;
+          return (
+            <div
+              key={`${i}-${turn.role}-${turn.content.slice(0, 20)}`}
+              className={
+                turn.role === "user"
+                  ? "text-amber-50/90 text-[15px] leading-relaxed"
+                  : "text-amber-200/85 text-[15px] leading-relaxed italic"
+              }
+            >
+              {turn.role === "companion" && !wasJustStreamed ? (
+                <RevealedMessage text={turn.content} />
+              ) : (
+                turn.content
+              )}
+            </div>
+          );
+        })}
 
         {/* Streaming text — only show if NOT already in conversation */}
         {streaming && !conversation.some(t => t.role === "companion" && t.content === streaming) && (
