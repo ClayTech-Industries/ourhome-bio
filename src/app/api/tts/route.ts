@@ -115,21 +115,28 @@ async function synthesizeWithElevenLabs(text: string, voiceId?: string): Promise
   const apiKey = process.env.ELEVENLABS_API_KEY;
   if (!apiKey) return null;
 
-  const voice = voiceId || process.env.ELEVENLABS_VOICE_ID || "pNInz6obpgDQGcFmaJgB";
+  const defaultVoice = process.env.ELEVENLABS_VOICE_ID || "pNInz6obpgDQGcFmaJgB";
+  // ElevenLabs voice IDs are expected to be simple tokens; reject anything else.
+  const safeVoiceId =
+    typeof voiceId === "string" && /^[A-Za-z0-9_-]{1,64}$/.test(voiceId) ? voiceId : undefined;
+  const voice = safeVoiceId || defaultVoice;
   const model = process.env.ELEVENLABS_MODEL || "eleven_multilingual_v2";
 
-  const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voice}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "xi-api-key": apiKey,
+  const response = await fetch(
+    `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voice)}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "xi-api-key": apiKey,
+      },
+      body: JSON.stringify({
+        text,
+        model_id: model,
+        voice_settings: { stability: 0.5, similarity_boost: 0.75 },
+      }),
     },
-    body: JSON.stringify({
-      text,
-      model_id: model,
-      voice_settings: { stability: 0.5, similarity_boost: 0.75 },
-    }),
-  });
+  );
 
   if (!response.ok) return null;
   return await response.arrayBuffer();
