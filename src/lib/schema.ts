@@ -230,7 +230,7 @@ export type Attachment = z.infer<typeof Attachment>;
 export const ConversationTurn = z.object({
   role: z.enum(["user", "companion", "system"]),
   content: z.string(),
-  attachments: z.array(Attachment).default([]),
+  attachments: z.array(Attachment).optional().default([]),
   createdAt: z.string().datetime().optional(),
 });
 export type ConversationTurn = z.infer<typeof ConversationTurn>;
