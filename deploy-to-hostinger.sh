@@ -30,7 +30,11 @@ sudo apt-get install -y nodejs
 
 # Create service user
 echo "[2/9] Creating service user..."
-sudo useradd -r -s /bin/false "$SERVICE_USER" 2>/dev/null || true
+sudo useradd -r -m -s /bin/false "$SERVICE_USER" 2> /dev/null || true
+
+# Ensure home directory exists with correct ownership (some VPS images don't create it)
+sudo mkdir -p "/home/$SERVICE_USER"
+sudo chown "$SERVICE_USER:$SERVICE_USER" "/home/$SERVICE_USER"
 
 # Prepare app directory
 echo "[3/9] Preparing app directory..."
