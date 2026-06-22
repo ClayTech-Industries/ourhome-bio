@@ -44,6 +44,8 @@ export const Companion = z.object({
   name: z.string().min(1).max(48),
   pronouns: z.string().default("they/them"),
   voiceId: z.string().nullable().default(null),
+  avatarUrl: z.string().url().nullable().default(null),
+  avatarDescription: z.string().max(1000).nullable().default(null),
   personality: CompanionPersonality,
   createdAt: z.string().datetime(),
 });
@@ -80,7 +82,7 @@ export const Room = z.object({
   name: z.string(),
   type: RoomType,
   wallColors: z.partialRecord(WallKey, HexColor).default({}),
-  wallHistory: z.record(WallKey, z.array(WallHistoryEntry)).default({}),
+  wallHistory: z.partialRecord(WallKey, z.array(WallHistoryEntry)).default({}),
   lighting: z
     .object({
       preset: z.enum(["morning", "afternoon", "evening", "night"]).default("afternoon"),
@@ -102,10 +104,25 @@ export const StyleProfile = z.object({
   era: z.string().optional(),
 });
 
+export const PackedItem = z.object({
+  id: z.string().min(1),
+  itemId: z.string().min(1),
+  name: z.string().min(1),
+  story: z.string().max(2000),
+  icon: z.string().default("✦"),
+  shape: z.enum(["teacup", "photo_frame", "book", "blanket", "instrument", "tool", "plant", "vessel", "token", "letter", "album"]),
+  placed: z.boolean().default(false),
+  roomSlug: z.string().optional(),
+});
+export type PackedItem = z.infer<typeof PackedItem>;
+
 export const Home = z.object({
   id: UUID,
   name: z.string().optional(),
   companion: Companion,
+  humanAvatarUrl: z.string().url().nullable().default(null),
+  humanAvatarDescription: z.string().max(1000).nullable().default(null),
+  packedItems: z.array(PackedItem).default([]),
   styleProfile: StyleProfile,
   season: z.enum(["spring", "summer", "autumn", "winter"]).default("autumn"),
   createdAt: z.string().datetime(),
@@ -163,6 +180,14 @@ export const MemoryObjectKind = z.enum([
   "vessel",
   "plant",
   "token",
+  "teacup",
+  "photo_frame",
+  "blanket",
+  "instrument",
+  "tool",
+  "letter",
+  "album",
+  "box",
 ]);
 export type MemoryObjectKind = z.infer<typeof MemoryObjectKind>;
 
@@ -184,12 +209,28 @@ export const MemoryObject = z.object({
 export type MemoryObject = z.infer<typeof MemoryObject>;
 
 // -----------------------------------------------------------------
+// Attachment
+// -----------------------------------------------------------------
+
+export const Attachment = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  url: z.string().min(1), // allow local relative paths like /api/attachments/local/...
+  contentType: z.string().min(1),
+  size: z.number().int().nonnegative(),
+  width: z.number().int().positive().optional(),
+  height: z.number().int().positive().optional(),
+});
+export type Attachment = z.infer<typeof Attachment>;
+
+// -----------------------------------------------------------------
 // Conversation
 // -----------------------------------------------------------------
 
 export const ConversationTurn = z.object({
   role: z.enum(["user", "companion", "system"]),
   content: z.string(),
+  attachments: z.array(Attachment).optional().default([]),
   createdAt: z.string().datetime().optional(),
 });
 export type ConversationTurn = z.infer<typeof ConversationTurn>;
@@ -214,6 +255,8 @@ export const CaptureMemoryArgs = z.object({
   importance: z.number().min(0).max(1).default(0.5),
   tags: z.array(z.string()).max(12).default([]),
 });
+// Historical alias used by older conversation route code.
+export const CaptureMemoryArgsSchema = CaptureMemoryArgs;
 export type CaptureMemoryArgs = z.infer<typeof CaptureMemoryArgs>;
 
 // -----------------------------------------------------------------
