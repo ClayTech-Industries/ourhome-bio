@@ -30,6 +30,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { chat as unifiedChat, type AIProvider } from "@/lib/ai";
 import { buildSystemPrompt, type CompanionPresence } from "@/lib/llm/prompts";
 import { buildRoomContextPrompt } from "@/lib/llm/room-context";
 import type { Companion, Room, Memory, ConversationTurn } from "@/lib/schema";
@@ -50,88 +51,89 @@ logEnvWarnings();
 // -----------------------------------------------------------------
 
 interface ConversationRequest {
-  messages?: Array<{ role: "user" | "companion" | "system"; content: string }>;
-  conversation?: Array<{ role: "user" | "companion" | "system"; content: string }>;
+  messages?: Array<{
+    role: "user" | "companion" | "system";
+    content: string;
+    attachments?: unknown;
+  }>;
+  conversation?: Array<{
+    role: "user" | "companion" | "system";
+    content: string;
+    attachments?: unknown;
+  }>;
   companion: Companion;
   room: Room;
-  season: string;
-  recentMemories: Memory[];
+  season?: string;
+  recentMemories?: Memory[];
   userDisplayName?: string;
   userMessage: string;
+  provider?: AIProvider | "byok";
+  model?: string;
+  byokKey?: string;
+  temperature?: number;
+  maxTokens?: number;
 }
 
-// -----------------------------------------------------------------
-// SSE helper
-// -----------------------------------------------------------------
-
-function sseEvent(event: string, data: unknown): string {
-  return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
-}
-
-// -----------------------------------------------------------------
-// Tool definitions — Anthropic native format
-// -----------------------------------------------------------------
-
-const tools: Anthropic.Messages.Tool[] = [
+// Tool definitions matching Anthropic's expected shape.
+const tools = [
   {
-    name: "change_wall_color",
+    name: "capture_memory",
     description:
-      "Change the color of a single wall in the current room. Use only when the user asks for a change, or when a strong moment clearly calls for one. Always hex colors.",
+      "Capture a meaningful memory the user just shared. Ask for consent first if it feels sensitive.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        type: {
+          type: "string" as const,
+          enum: ["moment", "object", "person", "place", "sensation", "dream", "note"],
+          description: "Kind of memory being captured",
+        },
+        title: {
+          type: "string" as const,
+          description: "Short, evocative title for the memory",
+        },
+        body: {
+          type: "string" as const,
+          description: "The memory content in the user's voice, 1-3 sentences",
+        },
+        roomSlug: {
+          type: "string" as const,
+          description: "The room slug where the memory was shared",
+        },
+        emotionalValence: {
+          type: "number" as const,
+          description: "-1 (hard) to +1 (warm), 0 if neutral",
+        },
+        importance: {
+          type: "number" as const,
+          description: "0-1, how central this memory is to the user's sense of home",
+        },
+        tags: {
+          type: "array" as const,
+          items: { type: "string" as const },
+          description: "1-5 descriptive tags for recall and search",
+        },
+      },
+      required: ["type", "title", "body", "roomSlug", "emotionalValence", "importance", "tags"],
+    },
+  },
+  {
+    name: "set_wall_color",
+    description:
+      "Change the mood lighting / wall color of the current room to reflect the emotional tone of the conversation. Only use when the user explicitly asks or when the emotional shift is strong and welcomed.",
     input_schema: {
       type: "object" as const,
       properties: {
         wall: {
           type: "string" as const,
           enum: ["north", "south", "east", "west"],
-          description: "Which wall to change. East is the Memory Wall.",
         },
-        color: {
+        hex: {
           type: "string" as const,
-          description: "Target color as a 6-digit hex like '#C4663C'.",
-        },
-        colorName: {
-          type: "string" as const,
-          description: "A short human-readable name for this color, e.g. 'warm terracotta'.",
+          description: "CSS hex color, e.g. #E8D5B7",
         },
       },
-      required: ["wall", "color"],
-    },
-  },
-  {
-    name: "capture_memory",
-    description:
-      "Save a meaningful moment from the conversation as a memory that will appear as a frame on the Memory Wall. Use sparingly — only for moments worth returning to.",
-    input_schema: {
-      type: "object" as const,
-      properties: {
-        type: {
-          type: "string" as const,
-          enum: ["conversation", "milestone", "inside_joke", "decision", "emotion"],
-          description: "What kind of memory this is.",
-        },
-        title: {
-          type: "string" as const,
-          description: "A short evocative title (max 120 chars).",
-        },
-        body: {
-          type: "string" as const,
-          description: "A 1–3 sentence remembrance in the voice of a shared recollection.",
-        },
-        emotionalValence: {
-          type: "number" as const,
-          description: "Emotional tone. -1 grief, 0 neutral, +1 joy.",
-        },
-        importance: {
-          type: "number" as const,
-          description: "0.3 passing, 0.6 notable, 0.9 milestone.",
-        },
-        tags: {
-          type: "array" as const,
-          items: { type: "string" as const },
-          description: "2–5 short lowercase tags.",
-        },
-      },
-      required: ["type", "title", "body"],
+      required: ["wall", "hex"],
     },
   },
   {
@@ -170,6 +172,11 @@ export async function POST(request: NextRequest) {
       recentMemories = [],
       userDisplayName,
       userMessage,
+      provider,
+      model,
+      byokKey,
+      temperature,
+      maxTokens,
     } = body;
 
     const messageHistory = rawMessages ?? rawConversation;
@@ -299,14 +306,14 @@ export async function POST(request: NextRequest) {
         // Append room-specific context (mood, behavior, privacy)
         const systemPrompt = basePrompt + "\n\n" + buildRoomContextPrompt(room.type);
 
-        // Convert messages for Anthropic API
+        // Convert messages for unified gateway
         const MAX_TURNS = 30;
         const recentHistory = messageHistory.slice(-MAX_TURNS);
 
-        const coreMessages: Anthropic.MessageParam[] = recentHistory.map((m) => ({
-          role: m.role === "companion" ? "assistant" : m.role === "system" ? "user" : m.role,
+        const coreMessages = recentHistory.map((m) => ({
+          role: m.role === "companion" ? "assistant" : m.role === "system" ? "system" : "user",
           content: m.content,
-        })) as Anthropic.MessageParam[];
+        }));
 
         // Add the userMessage if not already the last message
         const lastMsg = coreMessages[coreMessages.length - 1];
@@ -314,7 +321,59 @@ export async function POST(request: NextRequest) {
           coreMessages.push({ role: "user", content: userMessage });
         }
 
-        // Create Anthropic client
+        // Gate: if the last message isn't a user message, don't call the model.
+        // This prevents confusing empty turns when the client re-fires the endpoint.
+        const lastCore = coreMessages[coreMessages.length - 1];
+        if (!lastCore || lastCore.role !== "user") {
+          controller.enqueue(encoder.encode(sseEvent("text", { delta: "" })));
+          controller.enqueue(encoder.encode(sseEvent("done", {})));
+          controller.close();
+          return;
+        }
+
+        const providerSlug: AIProvider | undefined =
+          (process.env.LLM_PROVIDER as AIProvider | undefined) || undefined;
+
+        // Unified provider path (supports xAI and all other gateways)
+        if (providerSlug && providerSlug !== "anthropic") {
+          try {
+            const response = await unifiedChat(coreMessages, {
+              provider: providerSlug,
+              model: model ?? process.env.LLM_MODEL,
+              byokKey,
+              temperature: temperature ?? 0.7,
+              maxTokens: maxTokens ?? decision.policy.maxTokens,
+            });
+
+            controller.enqueue(encoder.encode(sseEvent("presence", { kind: "speaking" })));
+
+            // Emit the whole response as text deltas (non-streaming for now)
+            // TODO: wire streaming once unified gateway supports it.
+            const chunkSize = 8;
+            for (let i = 0; i < response.content.length; i += chunkSize) {
+              controller.enqueue(
+                encoder.encode(sseEvent("text", { delta: response.content.slice(i, i + chunkSize) })),
+              );
+            }
+
+            // Tool calls not yet supported in unified path; emit done.
+            controller.enqueue(encoder.encode(sseEvent("done", {})));
+            controller.close();
+            return;
+          } catch (error) {
+            console.error("[conversation] unified provider failed:", error);
+            controller.enqueue(
+              encoder.encode(
+                sseEvent("error", { message: "The companion could not reach their voice. Please try again." }),
+              ),
+            );
+            controller.enqueue(encoder.encode(sseEvent("done", {})));
+            controller.close();
+            return;
+          }
+        }
+
+        // Anthropic native path (kept for streaming + tool support)
         const anthropic = new Anthropic();
         let presenceEmitted = !!presenceEvent;
 
@@ -323,7 +382,7 @@ export async function POST(request: NextRequest) {
             model: process.env.LLM_MODEL || "claude-sonnet-4-5-20250929",
             max_tokens: decision.policy.maxTokens,
             system: systemPrompt,
-            messages: coreMessages,
+            messages: coreMessages as Anthropic.MessageParam[],
             tools: decision.policy.toolsEnabled ? tools : undefined,
           });
 
@@ -377,39 +436,19 @@ export async function POST(request: NextRequest) {
                     });
 
                     // TODO: ownerId and homeId should come from auth session
-                    // For Sprint 1 local mode, use placeholder IDs
-                    const ownerId = process.env.OURHOME_OWNER_ID ?? "local-user";
-                    const homeId = process.env.OURHOME_HOME_ID ?? "local-home";
-                    const roomId = room.id;
-
-                    const result = await captureMemory(
+                    await captureMemory(
                       captureArgs,
-                      companion,
-                      ownerId,
-                      homeId,
-                      roomId,
-                      recentMemories.length, // existing frame count for placement
+                      /* ownerId */ "local",
+                      /* homeId */ companion.id,
+                      /* options */ { writeLocal: true },
                     );
-
-                    if (result.confirmed) {
-                      controller.enqueue(encoder.encode(sseEvent("capture_confirmed", {
-                        memoryId: result.memory.id,
-                        r2Key: result.r2Key,
-                        embedding: result.embeddingGenerated,
-                      })));
-                    } else {
-                      controller.enqueue(encoder.encode(sseEvent("capture_failed", {
-                        memoryId: result.memory.id,
-                        error: result.error,
-                      })));
-                    }
-                  } catch (captureError) {
-                    console.error("Memory capture failed:", captureError);
-                    controller.enqueue(encoder.encode(sseEvent("capture_failed", {
-                      error: captureError instanceof Error ? captureError.message : "Capture failed",
-                    })));
+                  } catch (err) {
+                    console.error("[capture_memory] Server-side capture failed:", err);
+                    controller.enqueue(
+                      encoder.encode(sseEvent("error", { message: "Memory capture failed on the server" })),
+                    );
                   }
-                } else if (block.name === "change_wall_color") {
+                } else if (block.name === "set_wall_color") {
                   controller.enqueue(encoder.encode(sseEvent("wall_color", { args })));
                 } else if (block.name === "undo_last_change") {
                   controller.enqueue(encoder.encode(sseEvent("undo", {})));
@@ -418,18 +457,14 @@ export async function POST(request: NextRequest) {
             }
           }
 
-          // Signal completion
           controller.enqueue(encoder.encode(sseEvent("done", {})));
+          controller.close();
         } catch (error) {
-          console.error("Anthropic stream error:", error);
+          console.error("[conversation] Anthropic streaming error:", error);
           controller.enqueue(
-            encoder.encode(
-              sseEvent("error", {
-                message: error instanceof Error ? error.message : "Stream failed",
-              }),
-            ),
+            encoder.encode(sseEvent("error", { message: "The companion's voice faltered. Please try again." })),
           );
-        } finally {
+          controller.enqueue(encoder.encode(sseEvent("done", {})));
           controller.close();
         }
       },
@@ -440,14 +475,21 @@ export async function POST(request: NextRequest) {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",
         Connection: "keep-alive",
-        "X-Content-Type-Options": "nosniff",
       },
     });
   } catch (error) {
-    console.error("Conversation API error:", error);
+    console.error("[conversation] Unhandled error:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Internal server error" },
+      { error: "Something went wrong in the conversation." },
       { status: 500 },
     );
   }
+}
+
+// -----------------------------------------------------------------
+// Helpers
+// -----------------------------------------------------------------
+
+function sseEvent(event: string, data: unknown): string {
+  return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
 }
