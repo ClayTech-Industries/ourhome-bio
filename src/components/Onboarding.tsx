@@ -9,7 +9,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createHome } from "@/lib/storage/local";
-import { ITEM_CATALOG } from "@/lib/onboarding/unpack";
+import { ITEM_CATALOG, type OnboardingState } from "@/lib/onboarding/unpack";
 import { UnpackFlow } from "@/components/onboarding/UnpackFlow";
 
 function StepWrapper({
@@ -45,7 +45,7 @@ export function Onboarding({ onComplete }: { onComplete: () => void }) {
   const [pronouns, setPronouns] = useState("they/them");
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [unpackedItems, setUnpackedItems] = useState<string[]>([]);
-  const [itemPlacements, setItemPlacements] = useState<Record<string, string>>({});
+  const [itemPlacements, setItemPlacements] = useState<OnboardingState["itemPlacements"]>({});
   const [currentItem, setCurrentItem] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
