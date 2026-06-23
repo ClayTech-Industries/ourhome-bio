@@ -73,6 +73,7 @@ module.exports = {
     script: 'npm',
     args: 'run start:prod',
     cwd: '/opt/ourhome-bio',
+    exec_mode: 'fork',
     instances: 1,
     autorestart: true,
     watch: false,
