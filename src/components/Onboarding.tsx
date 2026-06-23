@@ -80,7 +80,7 @@ export function Onboarding({ onComplete }: { onComplete: () => void }) {
 
   const handleItemPlaced = (itemId: string, _story: string, room: string) => {
     setUnpackedItems((prev) => [...prev, itemId]);
-    setItemPlacements((prev) => ({ ...prev, [itemId]: room }));
+    setItemPlacements((prev) => ({ ...prev, [itemId]: room as OnboardingState["itemPlacements"][string] }));
     setCurrentItem(null);
   };
 
