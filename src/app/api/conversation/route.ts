@@ -192,6 +192,7 @@ export async function POST(request: NextRequest) {
     const conversation: ConversationTurn[] = messageHistory.map((m) => ({
       role: m.role as "user" | "companion" | "system",
       content: m.content,
+      attachments: (m as any).attachments || [],
       createdAt: new Date().toISOString(),
     }));
 
