@@ -266,14 +266,61 @@ async function callXAI(
   model: string,
   opts: AIOptions,
 ): Promise<AIResponse> {
-  return callOpenAI(
-    key,
-    messages,
+  // xAI's responses are occasionally gzip-compressed in a way that triggers
+  // Node's premature-close bug when run through the OpenAI SDK. We use a
+  // plain native fetch with explicit identity encoding to keep full control.
+  const url = "https://api.x.ai/v1/chat/completions";
+  const body = {
     model,
-    opts,
-    "https://api.x.ai/v1",
-    "xai",
+    messages: messages.map((m) => ({ role: m.role, content: m.content })),
+    temperature: opts.temperature ?? 0.7,
+    max_tokens: opts.maxTokens ?? 1024,
+    stream: false,
+  };
+
+  // Log first system message length for debugging persona injection
+  const firstSystem = messages.find((m) => m.role === "system");
+  console.log(
+    "[xAI] sending",
+    messages.length,
+    "messages; first system length:",
+    firstSystem ? firstSystem.content.length : 0,
   );
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${key}`,
+      "Accept-Encoding": "identity",
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`xAI HTTP ${response.status}: ${errText}`);
+  }
+
+  const data = (await response.json()) as {
+    id?: string;
+    model?: string;
+    choices?: Array<{ message?: { content?: string } }>;
+    usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
+  };
+
+  const content = data.choices?.[0]?.message?.content ?? "";
+  return {
+    id: data.id ?? randomUUID(),
+    provider: "xai",
+    model: data.model ?? model,
+    content,
+    usage: {
+      inputTokens: data.usage?.prompt_tokens,
+      outputTokens: data.usage?.completion_tokens,
+      totalTokens: data.usage?.total_tokens,
+    },
+  };
 }
 
 async function callMistral(
