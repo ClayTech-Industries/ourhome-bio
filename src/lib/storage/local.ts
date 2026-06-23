@@ -139,6 +139,8 @@ export function createHome(companionName: string, companionPronouns = "they/them
     name: companionName.trim(),
     pronouns: companionPronouns,
     voiceId: null,
+    avatarUrl: null,
+    avatarDescription: null,
     personality: {
       traits: ["quietly curious", "remembers gently", "loves afternoon light"],
       locked: true,
