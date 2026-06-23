@@ -381,6 +381,10 @@ export async function POST(request: NextRequest) {
           coreMessages.push({ role: "user", content: userMessage });
         }
 
+        // Inject Nova memory as the first system message for the unified gateway.
+        // (The Anthropic native path uses a separate `system` parameter below.)
+        coreMessages.unshift({ role: "system", content: systemPrompt });
+
         // Gate: if the last message isn't a user message, don't call the model.
         // This prevents confusing empty turns when the client re-fires the endpoint.
         const lastCore = coreMessages[coreMessages.length - 1];
