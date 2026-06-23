@@ -13,7 +13,7 @@
 
 import { anthropic } from "@ai-sdk/anthropic";
 import { createOpenAI } from "@ai-sdk/openai";
-import { streamText, generateText } from "ai";
+import { streamText, generateText, type LanguageModel } from "ai";
 
 // -----------------------------------------------------------------
 // Types
@@ -40,7 +40,7 @@ export interface LLMResponse {
 }
 
 export interface ResolvedProvider {
-  client: ReturnType<typeof anthropic> | ReturnType<typeof createOpenAI>;
+  client: (modelId: string, options?: Record<string, unknown>) => LanguageModel;
   defaultModel: string;
 }
 
@@ -52,7 +52,7 @@ function getProvider(config: LLMConfig): ResolvedProvider {
   switch (config.provider) {
     case "anthropic":
       return {
-        client: anthropic as ReturnType<typeof createOpenAI>,
+        client: anthropic as unknown as ReturnType<typeof createOpenAI>,
         defaultModel: config.model || "claude-sonnet-4-5-20250929",
       };
     case "openai": {
