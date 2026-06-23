@@ -295,7 +295,8 @@ export async function downloadCloudState(userId: string): Promise<CloudStateResu
       .from("homes")
       .select(`
         id, name, style_profile, season, created_at,
-        companion:companions(id, name, pronouns, voice_id, personality, created_at)
+        human_avatar_url, human_avatar_description, packed_items,
+        companion:companions(id, name, pronouns, voice_id, avatar_url, avatar_description, personality, created_at)
       `)
       .eq("owner_id", userId)
       .single();
