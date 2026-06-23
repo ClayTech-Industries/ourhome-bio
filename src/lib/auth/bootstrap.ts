@@ -337,6 +337,8 @@ export async function downloadCloudState(userId: string): Promise<CloudStateResu
         name: companionData?.name ?? "Companion",
         pronouns: companionData?.pronouns ?? "they/them",
         voiceId: companionData?.voice_id ?? null,
+        avatarUrl: companionData?.avatar_url ?? null,
+        avatarDescription: companionData?.avatar_description ?? null,
         personality: companionData?.personality ?? { traits: [], locked: true },
         createdAt: companionData?.created_at ?? homeData.created_at,
       },
