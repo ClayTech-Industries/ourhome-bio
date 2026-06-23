@@ -584,7 +584,7 @@ export async function transcribeAudio(
     throw new Error(`No API key available for STT provider ${provider}`);
   }
 
-  const blob = new Blob([audioBuffer], { type: mimeType });
+  const blob = new Blob([audioBuffer as Uint8Array], { type: mimeType });
   const formData = new FormData();
   formData.append("file", blob, "audio.webm");
   formData.append("model", opts.model ?? "whisper-large-v3");
