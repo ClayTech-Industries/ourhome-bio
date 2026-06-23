@@ -251,7 +251,7 @@ export interface StoredTurn {
 
 export function appendTurn(role: "user" | "companion", content: string, silent?: boolean): void {
   const state = read();
-  const turn: StoredTurn = { role, content, at: new Date().toISOString(), silent };
+  const turn: StoredTurn = { role, content, at: new Date().toISOString(), silent: silent ?? false };
   state.conversation.push(turn);
   if (state.conversation.length > 200) {
     state.conversation = state.conversation.slice(-200);
