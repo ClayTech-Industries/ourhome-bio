@@ -52,7 +52,7 @@ function getProvider(config: LLMConfig): ResolvedProvider {
   switch (config.provider) {
     case "anthropic":
       return {
-        client: anthropic,
+        client: anthropic as ReturnType<typeof createOpenAI>,
         defaultModel: config.model || "claude-sonnet-4-5-20250929",
       };
     case "openai": {
