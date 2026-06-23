@@ -259,7 +259,7 @@ export function HomeExperience() {
       conversation.map((t) => ({
         role: t.role,
         content: t.content,
-        silent: t.silent,
+        silent: (t as any).silent ?? false,
       })),
     [conversation],
   );
