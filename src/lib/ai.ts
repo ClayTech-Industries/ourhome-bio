@@ -79,7 +79,7 @@ const DEFAULT_MODELS: Record<AIProvider, string> = {
   anthropic: "claude-sonnet-4-20250514",
   openai: "gpt-5",
   google: "gemini-2.5-flash",
-  xai: "grok-3",
+  xai: "grok-4.3",
   mistral: "mistral-large-latest",
   groq: "llama-3.3-70b-versatile",
   cohere: "command-r-plus",
