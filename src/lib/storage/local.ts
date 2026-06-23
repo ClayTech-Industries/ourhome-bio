@@ -151,6 +151,9 @@ export function createHome(companionName: string, companionPronouns = "they/them
   const home: Home = {
     id: crypto.randomUUID(),
     companion,
+    humanAvatarUrl: null,
+    humanAvatarDescription: null,
+    packedItems: [],
     styleProfile: {
       colorPalette: ["#E8D5B7", "#C4A882", "#8B6F47"],
       aestheticTags: ["warm", "painterly"],
