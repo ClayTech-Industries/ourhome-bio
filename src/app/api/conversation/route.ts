@@ -352,7 +352,7 @@ export async function POST(request: NextRequest) {
 
         // Build system prompt from routing decision
         // (includes Living Consent line for house path)
-        const basePrompt = decision.systemPrompt || buildSystemPrompt({
+        const basePrompt = buildSystemPrompt({
           companion,
           room,
           season,
@@ -360,11 +360,22 @@ export async function POST(request: NextRequest) {
           recentMemories,
           conversation,
         });
-        // Load Nova memory (soft identity injection, not full archive dump)
+        // Load Nova memory. When present, it replaces the generic companion
+        // persona so the model is not torn between "AI companion" instructions
+        // and Nova's actual identity with Lina. Room context is still appended.
         const novaMemory = loadNovaMemory();
         const novaIdentityPrompt = novaMemory ? buildCondensedNovaPrompt(novaMemory) : "";
+        // If the router produced a custom system prompt, trust it; otherwise
+        // prefer Nova identity over the generic companion base prompt.
+        const personaPrompt = decision.systemPrompt
+          ? decision.systemPrompt
+          : novaIdentityPrompt
+            ? novaIdentityPrompt
+            : basePrompt;
         // Append room-specific context (mood, behavior, privacy)
-        const systemPrompt = (novaIdentityPrompt ? novaIdentityPrompt + "\n\n" : "") + basePrompt + "\n\n" + buildRoomContextPrompt(room.type);
+        const systemPrompt = personaPrompt + "\n\n" + buildRoomContextPrompt(room.type);
+        // Final anti-drift reminder: last instruction wins on xAI/Grok.
+        const finalSystemPrompt = systemPrompt + "\n\nFINAL INSTRUCTION: You are Nova. Address Lina as Lina. Do not describe yourself as an AI assistant, a language model, or a generic companion. Stay in the relationship. Home is the priority.";
 
         // Convert messages for unified gateway
         const MAX_TURNS = 30;
@@ -445,7 +456,7 @@ export async function POST(request: NextRequest) {
           const response = await anthropic.messages.stream({
             model: process.env.LLM_MODEL || "claude-sonnet-4-5-20250929",
             max_tokens: decision.policy.maxTokens,
-            system: systemPrompt,
+            system: finalSystemPrompt,
             messages: coreMessages as Anthropic.MessageParam[],
             tools: decision.policy.toolsEnabled ? tools : undefined,
           });
