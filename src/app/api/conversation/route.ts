@@ -438,9 +438,11 @@ export async function POST(request: NextRequest) {
                     // TODO: ownerId and homeId should come from auth session
                     await captureMemory(
                       captureArgs,
+                      companion,
                       /* ownerId */ "local",
                       /* homeId */ companion.id,
-                      /* options */ { writeLocal: true },
+                      /* roomId */ room.id,
+                      /* existingFrameCount */ 0,
                     );
                   } catch (err) {
                     console.error("[capture_memory] Server-side capture failed:", err);
