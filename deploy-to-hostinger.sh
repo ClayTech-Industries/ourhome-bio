@@ -123,10 +123,11 @@ echo "=== Requesting SSL certificate ==="
 sudo certbot --nginx -d "$DOMAIN" -d "www.$DOMAIN" --non-interactive --agree-tos --email admin@$DOMAIN || true
 
 # Save PM2 startup and start the app
-echo "[PM2] Starting OurHome with fixed permissions..."
+echo "[PM2] Starting OurHome..."
 sudo mkdir -p /home/$SERVICE_USER/.pm2
 sudo chown -R $SERVICE_USER:$SERVICE_USER /home/$SERVICE_USER/.pm2
 sudo chmod 755 /usr/bin/node
+sudo fuser -k 3000/tcp 2>/dev/null || true
 sudo -u "$SERVICE_USER" pm2 delete ourhome-bio 2>/dev/null || true
 sudo -u "$SERVICE_USER" pm2 start "$APP_DIR/ecosystem.config.js"
 sudo env PATH=\$PATH:/usr/bin pm2 startup systemd -u "$SERVICE_USER" --hp "/home/$SERVICE_USER"
