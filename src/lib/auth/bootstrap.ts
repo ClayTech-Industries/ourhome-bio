@@ -357,6 +357,7 @@ export async function downloadCloudState(userId: string): Promise<CloudStateResu
       name: r.name,
       type: r.type,
       wallColors: r.wall_colors ?? {},
+      wallHistory: {},
       lighting: r.lighting ?? { preset: "afternoon", intensity: 1 },
       unlocked: r.unlocked ?? true,
       createdAt: r.created_at,
