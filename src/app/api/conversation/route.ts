@@ -310,7 +310,7 @@ export async function POST(request: NextRequest) {
         const MAX_TURNS = 30;
         const recentHistory = messageHistory.slice(-MAX_TURNS);
 
-        const coreMessages = recentHistory.map((m) => ({
+        const coreMessages: { role: "system" | "user" | "assistant"; content: string }[] = recentHistory.map((m) => ({
           role: m.role === "companion" ? "assistant" : m.role === "system" ? "system" : "user",
           content: m.content,
         }));
