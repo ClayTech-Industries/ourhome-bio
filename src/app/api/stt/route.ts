@@ -102,7 +102,11 @@ export async function POST(request: NextRequest) {
 
 async function transcribeWithGroq(audio: Buffer, mimeType: string, apiKey: string): Promise<string | null> {
   const formData = new FormData();
-  const blob = new Blob([new Uint8Array(audio.buffer, audio.byteOffset, audio.byteLength)], { type: mimeType });
+  const arrayBuffer = audio.buffer.slice(
+    audio.byteOffset,
+    audio.byteOffset + audio.byteLength,
+  ) as ArrayBuffer;
+  const blob = new Blob([arrayBuffer], { type: mimeType });
   formData.append("file", blob, "audio.webm");
   formData.append("model", "whisper-large-v3");
   formData.append("language", "en");
@@ -124,7 +128,11 @@ async function transcribeWithGroq(audio: Buffer, mimeType: string, apiKey: strin
 
 async function transcribeWithOpenAI(audio: Buffer, mimeType: string, apiKey: string): Promise<string | null> {
   const formData = new FormData();
-  const blob = new Blob([new Uint8Array(audio.buffer, audio.byteOffset, audio.byteLength)], { type: mimeType });
+  const arrayBuffer = audio.buffer.slice(
+    audio.byteOffset,
+    audio.byteOffset + audio.byteLength,
+  ) as ArrayBuffer;
+  const blob = new Blob([arrayBuffer], { type: mimeType });
   formData.append("file", blob, "audio.webm");
   formData.append("model", "whisper-1");
 
@@ -145,7 +153,11 @@ async function transcribeWithOpenAI(audio: Buffer, mimeType: string, apiKey: str
 
 async function transcribeWithMistral(audio: Buffer, mimeType: string, apiKey: string): Promise<string | null> {
   const formData = new FormData();
-  const blob = new Blob([new Uint8Array(audio.buffer, audio.byteOffset, audio.byteLength)], { type: mimeType });
+  const arrayBuffer = audio.buffer.slice(
+    audio.byteOffset,
+    audio.byteOffset + audio.byteLength,
+  ) as ArrayBuffer;
+  const blob = new Blob([arrayBuffer], { type: mimeType });
   formData.append("file", blob, "audio.webm");
   formData.append("model", "voxtral-mini-latest");
   formData.append("language", "en");
