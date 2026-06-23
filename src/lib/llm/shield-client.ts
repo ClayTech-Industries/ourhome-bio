@@ -110,7 +110,6 @@ export async function shieldDirectCall(input: ShieldCallInput): Promise<ShieldCa
       : buildCheckInPrompt(input);
 
   const client = new Anthropic();
-  // Shield uses a dedicated Claude model, independent of the house chat provider.
   const model = process.env.SHIELD_MODEL || "claude-3-5-sonnet-20241022";
 
   const response = await client.messages.create({
