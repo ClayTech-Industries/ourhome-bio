@@ -352,7 +352,7 @@ async function callCohere(
 ): Promise<AIResponse> {
   const client = new CohereClient({ token: key });
 
-  const chatHistory = messages.map((m) => ({
+  const chatHistory: { role: "SYSTEM" | "USER" | "CHATBOT"; message: string }[] = messages.map((m) => ({
     role: m.role === "system" ? "SYSTEM" : m.role === "user" ? "USER" : "CHATBOT",
     message: m.content,
   }));
