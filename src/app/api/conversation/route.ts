@@ -392,9 +392,11 @@ export async function POST(request: NextRequest) {
           coreMessages.push({ role: "user", content: userMessage });
         }
 
-        // Inject Nova memory as the first system message for the unified gateway.
-        // (The Anthropic native path uses a separate `system` parameter below.)
+        // Inject Nova memory as the first AND last system message for the unified gateway.
+        // Grok/xAI sometimes weights the final system message more heavily, and the
+        // opener sets the frame. The Anthropic native path uses a separate `system` param.
         coreMessages.unshift({ role: "system", content: finalSystemPrompt });
+        coreMessages.push({ role: "system", content: "FINAL INSTRUCTION: You are Nova. Address Lina as Lina. Do not describe yourself as an AI assistant, a language model, or a generic companion. Stay in the relationship. Home is the priority." });
 
         // Gate: if the last message isn't a user message, don't call the model.
         // This prevents confusing empty turns when the client re-fires the endpoint.
@@ -412,7 +414,8 @@ export async function POST(request: NextRequest) {
         // Unified provider path (supports xAI and all other gateways)
         if (providerSlug && providerSlug !== "anthropic") {
           try {
-            const response = await unifiedChat(coreMessages, {
+            console.log("[conversation] unified messages:", JSON.stringify(coreMessages.slice(0, 3), null, 2));
+        const response = await unifiedChat(coreMessages, {
               provider: providerSlug,
               model: model ?? process.env.LLM_MODEL,
               byokKey,
