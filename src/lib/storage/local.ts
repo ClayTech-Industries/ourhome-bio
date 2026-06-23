@@ -38,7 +38,7 @@ interface StoredState {
   rooms: Room[];
   memories: Memory[];
   memoryObjects: MemoryObject[];
-  conversation: { role: "user" | "companion"; content: string; at: string }[];
+  conversation: StoredTurn[];
   undoStack: UndoEntry[];
   currentRoomSlug: string;
 }
@@ -251,7 +251,8 @@ export interface StoredTurn {
 
 export function appendTurn(role: "user" | "companion", content: string, silent?: boolean): void {
   const state = read();
-  state.conversation.push({ role, content, at: new Date().toISOString(), silent });
+  const turn: StoredTurn = { role, content, at: new Date().toISOString(), silent };
+  state.conversation.push(turn);
   if (state.conversation.length > 200) {
     state.conversation = state.conversation.slice(-200);
   }
